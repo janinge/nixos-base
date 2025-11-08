@@ -10,31 +10,33 @@
   outputs = { self, nixpkgs, disko, sops-nix, ... }:
   let
     system = "x86_64-linux";
-  in {
-    nixosConfigurations = {
-      hh4-nomad = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          disko.nixosModules.disko
-          sops-nix.nixosModules.sops
-          ./modules/common.nix
-          ./modules/power.nix
-          ./modules/nomad-client.nix
-          ./modules/disko/zfs-ssd.nix
-        ];
-      };
+    lib = nixpkgs.lib;
+    nodes = import ./cluster/nodes.nix;
 
-      edge-gw = nixpkgs.lib.nixosSystem {
-        inherit system;
-        modules = [
-          disko.nixosModules.disko
-          sops-nix.nixosModules.sops
-          ./modules/common.nix
-          ./modules/nomad-server.nix
-          ./modules/disko/ext4-vm.nix
-          ./modules/headscale.nix
-        ];
-      };
-    };
+    hostFiles = builtins.readDir ./hosts;
+
+    mkModules = node: [
+      disko.nixosModules.disko
+      sops-nix.nixosModules.sops
+      ./modules/common.nix
+      ./modules/disko/${node.diskLayout}.nix
+    ];
+
+    mkHostConfigs =
+      lib.mapAttrs'
+        (fileName: _: let
+          hostName = lib.removeSuffix ".nix" fileName;
+          nodeCfg = nodes.${hostName};
+        in {
+          name = hostName;
+          value = nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = mkModules nodeCfg ++ [ ./hosts/${fileName} ];
+            specialArgs = { inherit nodes hostName; };
+          };
+        })
+        (lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n) hostFiles);
+  in {
+    nixosConfigurations = mkHostConfigs;
   };
 }

@@ -20,7 +20,7 @@
     enable = true;
     extraConfig = {
       server = false;
-      retry_join = [ "100.x.y.z" ];  # replace with Consul server Tailscale IP
+      retry_join = [ "100.x.y.z" ];
       dns_config = { allow_stale = true; node_ttl = "15s"; };
       autopilot.cleanup_dead_servers = true;
     };

@@ -7,6 +7,10 @@
 
   networking.firewall.enable = false;
 
+  networking.hostId = builtins.substring 0 8 (
+    builtins.hashString "sha256" config.networking.hostName
+  );
+
   services.openssh = {
     enable = true;
     settings = {
@@ -14,26 +18,36 @@
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       X11Forwarding = false;
+      HostKeyAlgorithms = "ssh-ed25519";
+      PubkeyAcceptedAlgorithms = "ssh-ed25519";
     };
     ports = [ 36022 ];
   };
 
+  users.groups = {
+    tm = { };
+    media = { };
+  };
+
   users.users.janinge = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    packages = with pkgs; [ tree tmux htop git vim ];
+    extraGroups = [ "wheel" "media" ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
-      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDQu7S3fOmp/s7y6+xQLYUbv71THSkyPbqv3t5jdidXnH69nBSSLVShXvUb+CZPV5qrsdnDqHtwGDwCmeD8X7a8V5P14OlfN0C6/TssEM0fKqmWWEuzAtU0bpHIq8ZIAGBenY+1y2Pbx0NlPeFn7VLGdcywY/uyuZXx3JAYZA8uPSMXfGrXK2fTdpas8c7iNObqP9uWXOF3OuXmRhkE0BSSYW8b3xB27irihoVViLXNpGvsW4BYUMV0/amNLypL194oYsqY/+eBdmf4ueDBYdsVn7CUgxACe+GfNhDBtC/4qcs5z1Cs4OpVXo0Jo4xxGrgbChZSdVAf+H0ej2W1p96O+3g42StPJm99IWbje4AuvOgpPOn0z4+Mo6M/mcQzWEPZN2DGc3ojDESDUIkvUP/Gkitp7ehmX50/fkFlvHws5GWMUrC4rBAVf7Ek3xpHGGCZkM/cop49TBLNicaM+Xzz3qLZQM8ZYwfbf8LhfEMjw1ji+uHhXcOqMFns4dLjPdE= janinge@Air.home.arpa"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA8t6rvHVj8FdzQE/iV8T2bofg1ATTOuLqRoOw9fCHgC janinge@air"
     ];
   };
 
-  users.users.root.initialHashedPassword = "$y$jFT$YToVgnBA2HkKLVWaxIvfa0$cEnX5jJ2P.v4XPAdoWAt9/n/zNYiiCrIFoQwjJMFq6.";
+  users.users.rebe = {
+    isNormalUser = true;
+    extraGroups = [ "media" "tm" ];
+  };
 
+  users.users.root.initialHashedPassword = "$y$jFT$YToVgnBA2HkKLVWaxIvfa0$cEnX5jJ2P.v4XPAdoWAt9/n/zNYiiCrIFoQwjJMFq6.";
   security.sudo.wheelNeedsPassword = false;
-  security.pam.passwordHashAlgorithm = "yescrypt";
 
   environment.systemPackages = with pkgs; [
+    tree htop git vim
     zsh tmux curl wget jq unzip
     nomad consul
     tailscale
@@ -47,4 +61,6 @@
   nixpkgs.config.allowUnfree = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  system.stateVersion ="25.05";
 }
