@@ -10,6 +10,7 @@ in {
   ];
 
   networking.hostName = hostName;
+  networking.hostId = cfg.hostId;
 
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;

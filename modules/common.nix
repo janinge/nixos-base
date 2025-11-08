@@ -7,10 +7,6 @@
 
   networking.firewall.enable = false;
 
-  networking.hostId = builtins.substring 0 8 (
-    builtins.hashString "sha256" config.networking.hostName
-  );
-
   services.openssh = {
     enable = true;
     settings = {

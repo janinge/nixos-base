@@ -4,7 +4,6 @@
   services.nomad = {
     enable = true;
     settings = {
-      datacenter = "osl1";
       name = config.networking.hostName;
       bind_addr = "0.0.0.0";
       client.enabled = true;

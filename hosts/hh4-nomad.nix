@@ -5,12 +5,12 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/power.nix
-    ../modules/headscale.nix
-    ../modules/nomad-server.nix
+    ../modules/nomad-client.nix
     ../modules/fruit-server.nix
   ];
 
   networking.hostName = hostName;
+  networking.hostId = cfg.hostId;
 
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;
