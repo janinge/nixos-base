@@ -25,7 +25,7 @@
         "guest account" = "nobody";
         "map to guest" = "bad user";
       };
-      "music" = {
+      "Music" = {
         "path" = "/srv/music";
         "valid users" = "@media";
         "public" = "no";
