@@ -30,13 +30,17 @@
     staticConfigOptions = {
       api = true;
       providers.consulCatalog = {
-        endpoint = "127.0.0.1:8500";
+        endpoint.address = "127.0.0.1:8500";
         exposedByDefault = false;
         prefix = "traefik";
       };
       entryPoints = {
         web.address = ":80";
         websecure.address = ":443";
+      };
+      certificatesResolvers.letsencrypt.acme = {
+        storage = "/var/lib/traefik/acme.json";
+        httpChallenge.entryPoint = "web";
       };
     };
   };
