@@ -168,12 +168,6 @@
     fsType = "zfs";
   };
 
-  fileSystems."/boot" = {
-    device = lib.mkForce "/dev/disk/by-partlabel/ESP";
-    fsType  = "vfat";
-  };
-
-
   boot.supportedFilesystems = [ "zfs" ];
 
   boot.zfs.devNodes = "/dev/disk/by-id/";
