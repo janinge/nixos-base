@@ -50,6 +50,11 @@
     lzop pv mbuffer
   ];
 
+  environment.variables = {
+    EDITOR = "vim";
+    VISUAL = "vim";
+};
+
   programs.zsh.enable = true;
 
   services.tailscale.enable = true;

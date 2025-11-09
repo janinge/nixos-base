@@ -1,6 +1,14 @@
 { config, pkgs, lib, ... }:
 
 {
+  users.groups.nomad = {};
+  users.users.nomad = {
+    isSystemUser = true;
+    group = "nomad";
+    home = "/var/lib/nomad";
+    description = "Nomad service user";
+  };
+
   systemd.tmpfiles.rules = [
     "d /var/lib/nomad 0750 nomad nomad -"
   ];
@@ -37,8 +45,13 @@
   };
 
   virtualisation.docker.enable = lib.mkForce false;
-  systemd.services.nomad.serviceConfig.SupplementaryGroups = lib.mkForce [];
-  systemd.services.nomad.serviceConfig.DynamicUser = lib.mkForce false;
+
+  systemd.services.nomad.serviceConfig = {
+    User = "nomad";
+    Group = "nomad";
+    SupplementaryGroups = lib.mkForce [];
+    DynamicUser = lib.mkForce false;
+  };
 
   services.prometheus.exporters.node.enable = true;
   services.cadvisor = {
