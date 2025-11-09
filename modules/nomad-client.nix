@@ -42,6 +42,7 @@
 
   virtualisation.docker.enable = lib.mkForce false;
   systemd.services.nomad.serviceConfig.SupplementaryGroups = lib.mkForce [];
+  systemd.services.nomad.serviceConfig.DynamicUser = lib.mkForce false;
 
   services.prometheus.exporters.node.enable = true;
   services.cadvisor = {
