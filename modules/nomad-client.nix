@@ -32,6 +32,7 @@
   };
 
   virtualisation.docker.enable = lib.mkForce false;
+  systemd.services.nomad.serviceConfig.SupplementaryGroups = lib.mkForce [];
 
   services.prometheus.exporters.node.enable = true;
   services.cadvisor = {
