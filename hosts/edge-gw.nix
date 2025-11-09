@@ -15,5 +15,20 @@ in {
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;
 
-  services.tailscale.extraUpFlags = [ "--advertise-routes=${cfg.routedSubnet}" ];
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "both";
+    extraSetFlags = [
+      "--advertise-exit-node"
+      "--advertise-routes=${cfg.routedSubnet}"
+    ];
+  };
+
+  networking = {
+    nat = {
+      enable = true;
+      externalInterface = cfg.publicIf;
+      internalInterfaces = [ "tailscale0" ];
+    };
+  };
 }

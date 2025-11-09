@@ -4,6 +4,7 @@
     hostId = "13f00fb0";
     diskLayout = "ext4-vm";
     routedSubnet = "10.42.1.0/24";
+    publicIf = "enp1s0";
   };
 
   hh4-nomad = {
@@ -11,5 +12,6 @@
     hostId = "f2d31c54";
     diskLayout = "zfs-ssd";
     routedSubnet = "10.42.11.0/24";
+    publicIf = "enp1s0";
   };
 }

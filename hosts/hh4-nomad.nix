@@ -26,5 +26,11 @@ in {
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;
 
-  services.tailscale.extraUpFlags = [ "--advertise-routes=${cfg.routedSubnet}" ];
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "both";
+    extraSetFlags = [
+      "--advertise-routes=${cfg.routedSubnet}"
+    ];
+  };
 }
