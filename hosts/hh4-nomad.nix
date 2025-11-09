@@ -11,6 +11,17 @@ in {
 
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
+  networking.defaultGateway = "192.168.2.1";
+
+  networking.interfaces.enp1s0 = {
+    useDHCP = true;
+    ipv4.addresses = [
+      { address = "192.168.2.8"; prefixLength = 24; }
+    ];
+  };
+
+  services.resolved.enable = true;
+  services.resolved.fallbackDns = [ "45.90.28.186" "45.90.30.186" ];
 
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;
