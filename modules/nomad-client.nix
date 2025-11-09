@@ -1,11 +1,20 @@
 { config, pkgs, lib, ... }:
 
 {
+  users.groups.nomad = {};
+  users.users.nomad = {
+    isSystemUser = true;
+    group = "nomad";
+    home = "/var/lib/nomad";
+    description = "Nomad service user";
+  };
+
   services.nomad = {
     enable = true;
     settings = {
       name = config.networking.hostName;
       bind_addr = "0.0.0.0";
+      data_dir = "/var/lib/nomad";
       client.enabled = true;
       client.options = {
         "docker.endpoint" = "unix:///var/run/docker.sock";
