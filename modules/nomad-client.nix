@@ -1,13 +1,9 @@
 { config, pkgs, lib, ... }:
 
 {
-  users.groups.nomad = {};
-  users.users.nomad = {
-    isSystemUser = true;
-    group = "nomad";
-    home = "/var/lib/nomad";
-    description = "Nomad service user";
-  };
+  systemd.tmpfiles.rules = [
+    "d /var/lib/nomad 0750 nomad nomad -"
+  ];
 
   services.nomad = {
     enable = true;
