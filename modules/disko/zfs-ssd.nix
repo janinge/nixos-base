@@ -176,6 +176,9 @@
     "zfs_arc_max=4294967296"
   ];
 
+  boot.kernel.sysctl."module.zfs.parameters.zfs_arc_max" = toString (4 * 1024 * 1024 * 1024);
+  boot.kernel.sysctl."module.zfs.parameters.zfs_prefetch_disable" = "1";
+
   services.zfs = {
     autoSnapshot.enable = true;
     autoScrub.enable = true;
