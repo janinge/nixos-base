@@ -7,6 +7,7 @@ in {
     ../modules/power.nix
     ../modules/nomad-client.nix
     ../modules/fruit-server.nix
+    ../modules/sound-server.nix
   ];
 
   networking.hostName = hostName;
