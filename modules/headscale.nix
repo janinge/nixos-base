@@ -8,6 +8,15 @@
       server_url = "https://headscale.h00t.works";
       dns = { base_domain = "hs.h00t.works"; };
       log_level = "info";
+      derp = {
+        server = {
+          enabled = true;
+          region_id = 1007;
+          region_code = "osl";
+          region_name = "Oslo H00t Works";
+          stun_listen_addr = ":3478";
+        };
+      };
     };
   };
 
