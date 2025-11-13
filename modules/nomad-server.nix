@@ -3,28 +3,26 @@ let
   cfg = nodes.${hostName};
 in
 {
-  services.nomad = {
-    enable = true;
-    settings = {
-      name = hostName;
-      bind_addr = cfg.serviceIp;
-      server.enabled = true;
-      server.bootstrap_expect = 1;
-      client.enabled = false;
-      telemetry.publish_allocation_metrics = true;
+  imports = [ ./nomad.nix ];
+
+  services.nomad.settings = {
+    server = {
+      enabled = true;
+      bootstrap_expect = 1;
     };
+    advertise = {
+      http = cfg.serviceIp;
+      rpc = cfg.serviceIp;
+      serf = cfg.serviceIp;
+    };
+    client.enabled = false;
   };
 
-  services.consul = {
-    enable = true;
-    extraConfig = {
-      node_name = "consul-${hostName}";
-      bind_addr = cfg.serviceIp;
-      client_addr = "127.0.0.1 ${cfg.serviceIp}";
-      server = true;
-      bootstrap_expect = 1;
-      ui = true;
-    };
+  services.consul.extraConfig = {
+    client_addr = "127.0.0.1 ${cfg.serviceIp}";
+    server = true;
+    bootstrap_expect = 1;
+    ui = true;
   };
 
   services.traefik = {

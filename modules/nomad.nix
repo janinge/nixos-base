@@ -1,0 +1,35 @@
+{ config, pkgs, lib, nodes, hostName, ... }:
+let
+  cfg = nodes.${hostName};
+in
+{
+  users.groups.nomad = {};
+  users.users.nomad = {
+    isSystemUser = true;
+    group = "nomad";
+    home = "/var/lib/nomad";
+    description = "Nomad service user";
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/nomad 0750 nomad nomad -"
+  ];
+
+  services.nomad = {
+    enable = true;
+    settings = {
+      name = hostName;
+      data_dir = "/var/lib/nomad";
+      bind_addr = cfg.serviceIp;
+      telemetry.publish_allocation_metrics = true;
+    };
+  };
+
+  services.consul = {
+    enable = true;
+    extraConfig = {
+      node_name = "consul-${hostName}";
+      bind_addr = cfg.serviceIp;
+    };
+  };
+}

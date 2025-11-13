@@ -5,34 +5,17 @@ let
   consulJoin = lib.map (n: n.serviceIp) consulServers;
 in
 {
-  users.groups.nomad = {};
-  users.users.nomad = {
-    isSystemUser = true;
-    group = "nomad";
-    home = "/var/lib/nomad";
-    description = "Nomad service user";
-  };
+  imports = [ ./nomad.nix ];
 
-  systemd.tmpfiles.rules = [
-    "d /var/lib/nomad 0750 nomad nomad -"
-  ];
-
-  services.nomad = {
-    enable = true;
-    settings = {
-      name = hostName;
-      bind_addr = cfg.serviceIp;
-      data_dir = "/var/lib/nomad";
-      client = {
-        enabled = true;
-        cni_config_dir = "/etc/cni/net.d";
-        options = {
-          "docker.endpoint" = "unix:///var/run/docker.sock";
-        };
+  services.nomad.settings = {
+    client = {
+      enabled = true;
+      cni_config_dir = "/etc/cni/net.d";
+      options = {
+        "docker.endpoint" = "unix:///var/run/docker.sock";
       };
-      server.enabled = false;
-      telemetry.publish_allocation_metrics = true;
     };
+    server.enabled = false;
   };
 
   environment.etc."cni/net.d/nomad.conflist".text = lib.generators.toJSON {} {
@@ -57,15 +40,11 @@ in
     ];
   };
 
-  services.consul = {
-    enable = true;
-    extraConfig = {
-      server = false;
-      retry_join = consulJoin;
-      bind_addr = cfg.serviceIp;
-      dns_config = { allow_stale = true; node_ttl = "15s"; };
-      autopilot.cleanup_dead_servers = true;
-    };
+  services.consul.extraConfig = {
+    server = false;
+    retry_join = consulJoin;
+    dns_config = { allow_stale = true; node_ttl = "15s"; };
+    autopilot.cleanup_dead_servers = true;
   };
 
   virtualisation.podman = {
