@@ -22,6 +22,10 @@ in
       data_dir = "/var/lib/nomad";
       bind_addr = cfg.serviceIp;
       telemetry.publish_allocation_metrics = true;
+      consul = {
+        address = "127.0.0.1:8500";
+        auto_advertise = true;
+      };
     };
   };
 

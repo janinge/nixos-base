@@ -5,6 +5,8 @@ in
 {
   imports = [ ./nomad.nix ];
 
+  systemd.services.nomad.after = [ "consul.service" ];
+
   services.nomad.settings = {
     server = {
       enabled = true;
@@ -16,6 +18,10 @@ in
       serf = cfg.serviceIp;
     };
     client.enabled = false;
+    consul = {
+      server_service_name = "nomad";
+      server_auto_join = true;
+    };
   };
 
   services.consul.extraConfig = {

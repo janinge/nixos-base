@@ -16,6 +16,10 @@ in
       };
     };
     server.enabled = false;
+    consul = {
+      client_service_name = "nomad-client";
+      client_auto_join = true;
+    };
   };
 
   environment.etc."cni/net.d/nomad.conflist".text = lib.generators.toJSON {} {
