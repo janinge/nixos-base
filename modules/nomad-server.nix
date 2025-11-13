@@ -1,11 +1,13 @@
-{ config, pkgs, lib, ... }:
-
+{ config, pkgs, lib, nodes, hostName, ... }:
+let
+  cfg = nodes.${hostName};
+in
 {
   services.nomad = {
     enable = true;
     settings = {
-      name = config.networking.hostName;
-      bind_addr = "0.0.0.0";
+      name = hostName;
+      bind_addr = cfg.serviceIp;
       server.enabled = true;
       server.bootstrap_expect = 1;
       client.enabled = false;
@@ -16,9 +18,9 @@
   services.consul = {
     enable = true;
     extraConfig = {
-      node_name = "consul-${config.networking.hostName}";
-      bind_addr = "0.0.0.0";
-      client_addr = "0.0.0.0";
+      node_name = "consul-${hostName}";
+      bind_addr = cfg.serviceIp;
+      client_addr = "127.0.0.1 ${cfg.serviceIp}";
       server = true;
       bootstrap_expect = 1;
       ui = true;

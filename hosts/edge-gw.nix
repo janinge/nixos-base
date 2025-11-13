@@ -11,6 +11,14 @@ in {
 
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
+  networking.useDHCP = false;
+
+  networking.interfaces.${cfg.publicIf}.useDHCP = true;
+
+  networking.bridges.${cfg.serviceBridge}.interfaces = [];
+    networking.interfaces.${cfg.serviceBridge}.ipv4.addresses = [
+    { address = cfg.serviceIp; prefixLength = 24; }
+  ];
 
   services.nomad.settings.datacenter = cfg.datacenter;
   services.consul.extraConfig.datacenter = cfg.datacenter;
