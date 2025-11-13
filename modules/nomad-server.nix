@@ -7,29 +7,33 @@ in
 
   systemd.services.nomad.after = [ "consul.service" ];
 
-  services.nomad.settings = {
-    server = {
-      enabled = true;
-      bootstrap_expect = 1;
-    };
-    advertise = {
-      http = cfg.serviceIp;
-      rpc = cfg.serviceIp;
-      serf = cfg.serviceIp;
-    };
-    client.enabled = false;
-    consul = {
-      server_service_name = "nomad";
-      server_auto_join = true;
-    };
-  };
+  services.nomad.settings = lib.mkMerge [
+    {
+      server = {
+        enabled = true;
+        bootstrap_expect = 1;
+      };
+      advertise = {
+        http = cfg.serviceIp;
+        rpc = cfg.serviceIp;
+        serf = cfg.serviceIp;
+      };
+      client.enabled = false;
+      consul = {
+        server_service_name = "nomad";
+        server_auto_join = true;
+      };
+    }
+  ];
 
-  services.consul.extraConfig = {
-    client_addr = "127.0.0.1 ${cfg.serviceIp}";
-    server = true;
-    bootstrap_expect = 1;
-    ui = true;
-  };
+  services.consul.extraConfig = lib.mkMerge [
+    {
+      client_addr = "127.0.0.1 ${cfg.serviceIp}";
+      server = true;
+      bootstrap_expect = 1;
+      ui = true;
+    }
+  ];
 
   services.traefik = {
     enable = true;

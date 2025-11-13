@@ -7,20 +7,22 @@ in
 {
   imports = [ ./nomad.nix ];
 
-  services.nomad.settings = {
-    client = {
-      enabled = true;
-      cni_config_dir = "/etc/cni/net.d";
-      options = {
-        "docker.endpoint" = "unix:///var/run/docker.sock";
+  services.nomad.settings = lib.mkMerge [
+    {
+      client = {
+        enabled = true;
+        cni_config_dir = "/etc/cni/net.d";
+        options = {
+          "docker.endpoint" = "unix:///var/run/docker.sock";
+        };
       };
-    };
-    server.enabled = false;
-    consul = {
-      client_service_name = "nomad-client";
-      client_auto_join = true;
-    };
-  };
+      server.enabled = false;
+      consul = {
+        client_service_name = "nomad-client";
+        client_auto_join = true;
+      };
+    }
+  ];
 
   environment.etc."cni/net.d/nomad.conflist".text = lib.generators.toJSON {} {
     cniVersion = "0.4.0";
@@ -44,12 +46,14 @@ in
     ];
   };
 
-  services.consul.extraConfig = {
-    server = false;
-    retry_join = consulJoin;
-    dns_config = { allow_stale = true; node_ttl = "15s"; };
-    autopilot.cleanup_dead_servers = true;
-  };
+  services.consul.extraConfig = lib.mkMerge [
+    {
+      server = false;
+      retry_join = consulJoin;
+      dns_config = { allow_stale = true; node_ttl = "15s"; };
+      autopilot.cleanup_dead_servers = true;
+    }
+  ];
 
   virtualisation.podman = {
     enable = true;
