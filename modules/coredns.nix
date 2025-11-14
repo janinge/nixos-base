@@ -16,6 +16,10 @@ in
           answer "{{ .Name }} 300 IN A ${cfg.serviceIp}"
         }
 
+        template IN ANY h00t.works. {
+          rcode NOERROR
+        }
+
         forward . tls://45.90.28.223 tls://45.90.30.223 {
           except h00t.works.
           tls_servername 1663da.dns.nextdns.io

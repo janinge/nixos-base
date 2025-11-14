@@ -17,7 +17,7 @@ in {
   networking.interfaces.${cfg.publicIf}.useDHCP = true;
 
   networking.bridges.${cfg.serviceBridge}.interfaces = [];
-    networking.interfaces.${cfg.serviceBridge}.ipv4.addresses = [
+  networking.interfaces.${cfg.serviceBridge}.ipv4.addresses = [
     { address = cfg.serviceIp; prefixLength = 24; }
   ];
 

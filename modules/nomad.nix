@@ -7,6 +7,7 @@ in
   users.users.nomad = {
     isSystemUser = true;
     group = "nomad";
+    extraGroups = [ "podman" ];
     home = "/var/lib/nomad";
     description = "Nomad service user";
   };
@@ -17,6 +18,12 @@ in
 
   services.nomad = {
     enable = true;
+
+    extraPackages = with pkgs; [
+      nomad-driver-podman
+      cni-plugins
+    ];
+
     settings = {
       name = hostName;
       data_dir = "/var/lib/nomad";
@@ -38,4 +45,9 @@ in
       datacenter = "earth";
     };
   };
+
+  environment.systemPackages = with pkgs; [
+    nomad-driver-podman
+    cni-plugins
+  ];
 }

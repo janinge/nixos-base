@@ -12,13 +12,23 @@ in
       client = {
         enabled = true;
         cni_config_dir = "/etc/cni/net.d";
-        options = {
-          "docker.endpoint" = "unix:///var/run/docker.sock";
-        };
       };
       server.enabled = false;
+
+      plugin = {
+        "podman" = {
+          config = {
+            socket_path = "unix:///run/podman/podman.sock";
+            volumes.enabled = true;
+            gc = {
+              image = true;
+              image_delay = "3m";
+            };
+          };
+        };
+      };
+
       consul = {
-        client_service_name = "nomad-client";
         client_auto_join = true;
       };
     }
@@ -57,7 +67,7 @@ in
 
   virtualisation.podman = {
     enable = true;
-    dockerCompat = true;
+    dockerCompat = false;
     defaultNetwork.settings.dns_enabled = false;
   };
 
@@ -66,7 +76,7 @@ in
   systemd.services.nomad.serviceConfig = {
     User = "nomad";
     Group = "nomad";
-    SupplementaryGroups = lib.mkForce [];
+    SupplementaryGroups = lib.mkForce [ "podman" ];
     DynamicUser = lib.mkForce false;
   };
 
