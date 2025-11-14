@@ -49,5 +49,10 @@ in
   environment.systemPackages = with pkgs; [
     nomad-driver-podman
     cni-plugins
+    podman
   ];
+
+  environment.variables = {
+    NOMAD_ADDR = "http://${cfg.serviceIp}:4646";
+  };
 }
