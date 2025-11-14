@@ -22,6 +22,7 @@ in
       data_dir = "/var/lib/nomad";
       bind_addr = cfg.serviceIp;
       telemetry.publish_allocation_metrics = true;
+      datacenter = "earth";
       consul = {
         address = "127.0.0.1:8500";
         auto_advertise = true;
@@ -34,6 +35,7 @@ in
     extraConfig = {
       node_name = "consul-${hostName}";
       bind_addr = cfg.serviceIp;
+      datacenter = "earth";
     };
   };
 }

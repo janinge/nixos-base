@@ -31,9 +31,6 @@ in {
   services.resolved.enable = true;
   services.resolved.fallbackDns = [ "45.90.28.186" "45.90.30.186" ];
 
-  services.nomad.settings.datacenter = cfg.datacenter;
-  services.consul.extraConfig.datacenter = cfg.datacenter;
-
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "both";

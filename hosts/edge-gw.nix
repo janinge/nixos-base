@@ -21,9 +21,6 @@ in {
     { address = cfg.serviceIp; prefixLength = 24; }
   ];
 
-  services.nomad.settings.datacenter = cfg.datacenter;
-  services.consul.extraConfig.datacenter = cfg.datacenter;
-
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "both";
