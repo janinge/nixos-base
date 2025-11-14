@@ -6,6 +6,7 @@ in {
     ../modules/common.nix
     ../modules/power.nix
     ../modules/headscale.nix
+    ../modules/coredns.nix
     ../modules/nomad-server.nix
   ];
 

@@ -1,4 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, nodes, hostName, ... }:
+let
+  cfg = nodes.${hostName};
+in
 {
   services.headscale = {
     enable = true;
@@ -6,7 +9,17 @@
     port = 8080;
     settings = {
       server_url = "https://headscale.h00t.works";
-      dns = { base_domain = "hs.h00t.works"; };
+      dns = {
+        magic_dns = true;
+        base_domain = "ts.h00t.works";
+        search_domains = [
+          "h00t.works"
+          "ts.h00t.works"
+        ];
+        nameservers.global = [
+          cfg.serviceIp
+        ];
+      };
       log_level = "info";
       derp = {
         server = {
