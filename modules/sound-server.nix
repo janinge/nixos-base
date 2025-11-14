@@ -17,6 +17,42 @@
     systemWide = true;
   };
 
+  systemd.services.nqptp = {
+    description = "Not Quite PTP";
+    documentation = [ "man:nqptp(8)" ];
+    after = [ "network.target" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      ExecStart = "${pkgs.nqptp}/bin/nqptp";
+      User = "nqptp";
+      Group = "nqptp";
+
+      # Capabilities required for network timing
+      AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+      CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
+
+      Restart = "on-failure";
+      RestartSec = "5s";
+
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+
+      RuntimeDirectory = "nqptp";
+      RuntimeDirectoryMode = "0755";
+    };
+  };
+
+  users.users.nqptp = {
+    isSystemUser = true;
+    group = "nqptp";
+    description = "nqptp service user";
+  };
+
+  users.groups.nqptp = {};
+
   services.shairport-sync = {
     enable = true;
     package = pkgs.shairport-sync-airplay2;
@@ -36,13 +72,39 @@
     };
   };
 
-  # Shairport-sync starts after PipeWire is set up
+  # Shairport-sync starts after PipeWire and nqptp are ready
   systemd.services.shairport-sync = {
-    after = [ "pipewire.service" "pipewire-pulse.service" ];
-    wants = [ "pipewire-pulse.service" ];
+    after = [ "pipewire.service" "pipewire-pulse.service" "nqptp.service" ];
+    wants = [ "pipewire-pulse.service" "nqptp.service" ];
+    requires = [ "nqptp.service" ];
     serviceConfig = {
       SupplementaryGroups = [ "audio" "pipewire" ];
       RestartSec = "5s";
+    };
+  };
+
+  # Fix PipeWire system-wide D-Bus and PID file issues
+  systemd.services.pipewire = {
+    environment = {
+      # Disable D-Bus session dependencies for system-wide mode
+      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
+    };
+  };
+
+  systemd.services.pipewire-pulse = {
+    environment = {
+      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
+    };
+    serviceConfig = {
+      # Fix PID file location for system service
+      RuntimeDirectory = "pipewire";
+      RuntimeDirectoryMode = "0755";
+    };
+  };
+
+  systemd.services.wireplumber = {
+    environment = {
+      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
     };
   };
 
@@ -134,5 +196,6 @@
     zita-njbridge
     alsa-utils
     owntone
+    nqptp
   ];
 }
