@@ -34,6 +34,16 @@
     };
   };
 
+  # Shairport-sync starts after PipeWire is set up
+  systemd.services.shairport-sync = {
+    after = [ "pipewire.service" "pipewire-pulse.service" ];
+    wants = [ "pipewire-pulse.service" ];
+    serviceConfig = {
+      SupplementaryGroups = [ "audio" "pipewire" ];
+      RestartSec = "5s";
+    };
+  };
+
   users.users.owntone = {
     isSystemUser = true;
     group = "owntone";
