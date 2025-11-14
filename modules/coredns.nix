@@ -22,12 +22,6 @@ in
           # Do not forward queries for the local domain.
           except h00t.works.;
         }
-
-        # Log errors to stderr.
-        errors;
-
-        # Enable a 30-second cache.
-        cache 30;
       }
     '';
   };
