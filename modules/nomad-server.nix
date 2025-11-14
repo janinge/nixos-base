@@ -46,10 +46,9 @@ in
       };
 
       entryPoints = {
-        web.address = ":80";
-        websecure.address = ":443";
-
         tailnet.address = "${cfg.serviceIp}:443";
+        web.address = ":80";
+        websecure.address = "0.0.0.0:443";
       };
 
       providers.consulCatalog = {

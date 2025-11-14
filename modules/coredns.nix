@@ -23,9 +23,6 @@ in
           except h00t.works.;
         }
 
-        # Enable logging for queries.
-        log;
-
         # Log errors to stderr.
         errors;
 
