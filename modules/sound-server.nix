@@ -83,13 +83,28 @@
     };
   };
 
-  # Fix PipeWire system-wide D-Bus and PID file issues
   systemd.services.pipewire = {
     environment = {
       # Disable D-Bus session dependencies for system-wide mode
       DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
     };
   };
+
+  # Configure PipeWire PulseAudio for system-wide mode
+  environment.etc."pipewire/pipewire-pulse.conf.d/99-system-wide.conf".text = ''
+    context.properties = {
+      # Disable PID file creation
+      pulse.properties = {
+        server.daemonize = false
+        server.pid-file = null
+      }
+    }
+
+    pulse.properties = {
+      # Don't try to acquire org.pulseaudio.Server on D-Bus
+      server.dbus-name = null
+    }
+  '';
 
   systemd.services.pipewire-pulse = {
     environment = {
