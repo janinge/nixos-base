@@ -8,12 +8,12 @@ in
     config = ''
       .:53 {
         # Bind the DNS server to the service IP address for this host.
-        bind ${cfg.serviceIp};
+        bind ${cfg.serviceIp}
 
         # Serve `h00t.works` and `*.h00t.works` queries,
         # answering with the node's service IP.
         template IN A h00t.works. {
-          answer "{{ .Name }} 300 IN A ${cfg.serviceIp}";
+          answer "{{ .Name }} 300 IN A ${cfg.serviceIp}"
         }
 
         # Forward all other queries to NextDNS via DNS-over-TLS.
