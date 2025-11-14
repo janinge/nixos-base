@@ -13,6 +13,8 @@
     };
     pulse.enable = true;
     jack.enable = true;
+
+    systemWide = true;
   };
 
   services.shairport-sync = {
