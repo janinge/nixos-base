@@ -16,11 +16,9 @@ in
           answer "{{ .Name }} 300 IN A ${cfg.serviceIp}"
         }
 
-        # Forward all other queries to NextDNS via DNS-over-TLS.
-        # Alternatives include DNS-over-QUIC (quic://) or DNS-over-HTTPS (https://).
-        forward . quic://dns1.nextdns.io tls://dns2.nextdns.io {
-          # Do not forward queries for the local domain.
-          except h00t.works.;
+        forward . tls://45.90.28.223 tls://45.90.30.223 {
+          except h00t.works.
+          tls_servername 1663da.dns.nextdns.io
         }
       }
     '';
