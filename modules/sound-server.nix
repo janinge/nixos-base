@@ -63,11 +63,6 @@
       server = "127.0.0.1"
     }
 
-    airplay_shared {
-      # Control all AirPlay devices
-      control_all_outputs = false
-    }
-
     # DAAP/iTunes library sharing
     library {
       port = 3689
