@@ -16,7 +16,7 @@
 
     systemWide = true;
 
-    extraConfig.pipewire-pulse."10-systemwide" = {
+    extraConfig.pipewire-pulse."99-custom-pulse" = {
       "context.properties" = {
         "pulse.min.req" = 0;
         "pulse.default.req" = 0;
@@ -25,16 +25,7 @@
       "pulse.properties" = {
         "pulse.runtime-dir" = "/run/pipewire";
       };
-    };
 
-    extraConfig.pipewire-pulse."20-pidfile" = {
-      "pulse.properties" = {
-        "pulse.pid.file" = "/run/pipewire/pulse/pid";
-      };
-    };
-
-    # Make the Pulse module also listen on TCP
-    extraConfig.pipewire-pulse."30-tcp" = {
       "context.modules" = [
         {
           name = "libpipewire-module-protocol-pulse";
@@ -43,19 +34,29 @@
             "pulse.default.req" = "960/48000";
             "pulse.min.quantum" = "256/48000";
             "pulse.max.quantum" = "8192/48000";
-            "server.address" = [ "unix:native" "tcp:127.0.0.1:4713" ];
+            # Listen on both Unix socket and TCP
+            "server.address" = [
+              "unix:native"
+              "tcp:4713"
+            ];
           };
         }
       ];
     };
   };
 
+  # Disable default NixOS module configuration to avoid a conflict
+  services.pipewire.extraConfig.pipewire-pulse."10-native-protocol" = null;
+
   systemd.user.services.pipewire.enable = false;
   systemd.user.services.pipewire-pulse.enable = false;
   systemd.user.services.wireplumber.enable = false;
 
-  systemd.services.pipewire-pulse.serviceConfig.Environment =
-    [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+  systemd.services.pipewire-pulse.serviceConfig = {
+    Environment = [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+    RuntimeDirectory = "pipewire/pulse";
+    RuntimeDirectoryMode = "0755";
+  };
 
   systemd.services.pipewire.serviceConfig.Environment =
     [ "XDG_RUNTIME_DIR=/run/pipewire" ];
@@ -138,7 +139,6 @@
 
   users.groups.owntone = {};
 
-
   environment.etc."owntone.conf".text = ''
     general {
       uid = "owntone"
@@ -156,7 +156,6 @@
     audio {
       nickname = "Computer"
       type = "pulseaudio"
-      server = "127.0.0.1:4713"
     }
 
     # DAAP/iTunes library sharing
@@ -178,13 +177,12 @@
     "f /var/log/owntone.log 0640 owntone owntone -"
     "d /run/pipewire 0755 root pipewire -"
     "d /run/pipewire/pulse 0755 pipewire pipewire -"
-    "f /run/pipewire/pulse/pid 0644 pipewire pipewire -"
   ];
 
   systemd.services.owntone = {
     description = "OwnTone media server (forked-daapd)";
     after = [ "network.target" "sound.target" "pipewire.service" "pipewire-pulse.service" ];
-    wants = [ "avahi-daemon.service" ];
+    wants = [ "avahi-daemon.service" "pipewire-pulse.service" ];
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
