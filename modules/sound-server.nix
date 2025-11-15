@@ -16,7 +16,8 @@
 
     systemWide = true;
 
-    extraConfig.pipewire-pulse."99-custom-pulse" = {
+    # Add TCP support to the existing pulse server
+    extraConfig.pipewire-pulse."10-systemwide" = {
       "context.properties" = {
         "pulse.min.req" = 0;
         "pulse.default.req" = 0;
@@ -26,27 +27,19 @@
         "pulse.runtime-dir" = "/run/pipewire";
       };
 
-      "context.modules" = [
+      "pulse.rules" = [
         {
-          name = "libpipewire-module-protocol-pulse";
-          args = {
-            "pulse.min.req" = "256/48000";
-            "pulse.default.req" = "960/48000";
-            "pulse.min.quantum" = "256/48000";
-            "pulse.max.quantum" = "8192/48000";
-            # Listen on both Unix socket and TCP
-            "server.address" = [
-              "unix:native"
-              "tcp:4713"
-            ];
+          matches = [ { "pulse.module.name" = "module-native-protocol-tcp"; } ];
+          actions = {
+            update-props = {
+              "pulse.tcp.listen" = "127.0.0.1";
+              "pulse.tcp.port" = 4713;
+            };
           };
         }
       ];
     };
   };
-
-  # Disable default NixOS module configuration to avoid a conflict
-  services.pipewire.extraConfig.pipewire-pulse."10-native-protocol" = null;
 
   systemd.user.services.pipewire.enable = false;
   systemd.user.services.pipewire-pulse.enable = false;
