@@ -19,11 +19,6 @@ in
   services.nomad = {
     enable = true;
 
-    extraPackages = with pkgs; [
-      nomad-driver-podman
-      cni-plugins
-    ];
-
     settings = {
       name = hostName;
       data_dir = "/var/lib/nomad";
@@ -34,6 +29,9 @@ in
       consul = {
         address = "127.0.0.1:8500";
         auto_advertise = true;
+      };
+      client = {
+        cni_path = "${pkgs.cni-plugins}/bin";
       };
     };
   };
