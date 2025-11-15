@@ -73,11 +73,15 @@ in
 
   virtualisation.docker.enable = lib.mkForce false;
 
-  systemd.services.nomad.serviceConfig = {
-    User = "nomad";
-    Group = "nomad";
-    SupplementaryGroups = lib.mkForce [ "podman" ];
-    DynamicUser = lib.mkForce false;
+  systemd.services.nomad = {
+    serviceConfig = {
+      User = "nomad";
+      Group = "nomad";
+      SupplementaryGroups = lib.mkForce [ "podman" ];
+      DynamicUser = lib.mkForce false;
+      # Override ExecStart to remove the -plugin-dir argument
+      ExecStart = lib.mkForce "${config.services.nomad.package}/bin/nomad agent -config=/etc/nomad.json";
+    };
   };
 
   services.prometheus.exporters.node.enable = true;
