@@ -16,13 +16,7 @@
 
     systemWide = true;
 
-    # Add TCP support to the existing pulse server
     extraConfig.pipewire-pulse."10-systemwide" = {
-      "context.properties" = {
-        "pulse.min.req" = 0;
-        "pulse.default.req" = 0;
-      };
-
       "pulse.properties" = {
         "pulse.runtime-dir" = "/run/pipewire";
       };
@@ -123,6 +117,59 @@
     };
   };
 
+  # Librespot for Spotify Connect
+  users.users.librespot = {
+    isSystemUser = true;
+    group = "librespot";
+    extraGroups = [ "audio" "pipewire" ];
+    description = "Librespot Spotify Connect service user";
+  };
+
+  users.groups.librespot = {};
+
+  systemd.services.librespot = {
+    description = "Librespot Spotify Connect receiver";
+    documentation = [ "https://github.com/librespot-org/librespot" ];
+    after = [ "network.target" "sound.target" "pipewire.service" "pipewire-pulse.service" ];
+    wants = [ "avahi-daemon.service" "pipewire-pulse.service" ];
+    wantedBy = [ "multi-user.target" ];
+
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = ''
+        ${pkgs.librespot.override { withPulseAudio = true; }}/bin/librespot \
+          --name "Hiss" \
+          --backend pulseaudio \
+          --device-type speaker \
+          --bitrate 320 \
+          --cache /var/cache/librespot
+      '';
+
+      User = "librespot";
+      Group = "librespot";
+      SupplementaryGroups = [ "audio" "pipewire" ];
+
+      # Security hardening
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+
+      # Cache directory access
+      CacheDirectory = "librespot";
+      CacheDirectoryMode = "0750";
+
+      Restart = "on-failure";
+      RestartSec = "10s";
+    };
+
+    environment = {
+      PULSE_SERVER = "/run/pipewire/pulse/native";
+      PULSE_RUNTIME_PATH = "/run/pipewire/pulse";
+    };
+  };
+
+  # OwnTone media server
   users.users.owntone = {
     isSystemUser = true;
     group = "owntone";
@@ -166,6 +213,7 @@
   systemd.tmpfiles.rules = [
     "d /var/lib/owntone 0750 owntone owntone -"
     "d /var/cache/owntone 0750 owntone owntone -"
+    "d /var/cache/librespot 0750 librespot librespot -"
     "d /var/log 0755 root root -"
     "f /var/log/owntone.log 0640 owntone owntone -"
     "d /run/pipewire 0755 root pipewire -"
@@ -208,10 +256,15 @@
 
   environment.systemPackages = with pkgs; [
     jack2
-    qjackctl
     zita-njbridge
     alsa-utils
     owntone
     nqptp
+    (librespot.override {
+      withPulseAudio = true;
+      withDNS-SD = true;
+      withMDNS = false;
+      withAvahi = false;
+    })
   ];
 }
