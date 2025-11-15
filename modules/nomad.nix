@@ -19,6 +19,8 @@ in
   services.nomad = {
     enable = true;
 
+    dropPrivileges = false;
+
     extraPackages = with pkgs; [
       nomad-driver-podman
       cni-plugins
@@ -30,7 +32,6 @@ in
       bind_addr = cfg.serviceIp;
       telemetry.publish_allocation_metrics = true;
       datacenter = "earth";
-      plugin_dir = "${pkgs.nomad-driver-podman}/bin";
       consul = {
         address = "127.0.0.1:8500";
         auto_advertise = true;
