@@ -32,6 +32,22 @@
         "pulse.pid.file" = "/run/pipewire/pulse/pid";
       };
     };
+
+    # Make the Pulse module also listen on TCP
+    extraConfig.pipewire-pulse."30-tcp" = {
+      "context.modules" = [
+        {
+          name = "libpipewire-module-protocol-pulse";
+          args = {
+            "pulse.min.req" = "256/48000";
+            "pulse.default.req" = "960/48000";
+            "pulse.min.quantum" = "256/48000";
+            "pulse.max.quantum" = "8192/48000";
+            "server.address" = [ "unix:native" "tcp:127.0.0.1:4713" ];
+          };
+        }
+      ];
+    };
   };
 
   systemd.user.services.pipewire.enable = false;
@@ -122,6 +138,7 @@
 
   users.groups.owntone = {};
 
+
   environment.etc."owntone.conf".text = ''
     general {
       uid = "owntone"
@@ -139,7 +156,7 @@
     audio {
       nickname = "Computer"
       type = "pulseaudio"
-      server = "127.0.0.1"
+      server = "127.0.0.1:4713"
     }
 
     # DAAP/iTunes library sharing
@@ -166,7 +183,7 @@
 
   systemd.services.owntone = {
     description = "OwnTone media server (forked-daapd)";
-    after = [ "network.target" "sound.target" "pipewire.service" ];
+    after = [ "network.target" "sound.target" "pipewire.service" "pipewire-pulse.service" ];
     wants = [ "avahi-daemon.service" ];
     wantedBy = [ "multi-user.target" ];
 
