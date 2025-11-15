@@ -15,21 +15,6 @@
     jack.enable = true;
 
     systemWide = true;
-
-    # Configure PipeWire PulseAudio for system-wide mode
-    extraConfig.pipewire-pulse."99-system-wide" = {
-      "context.properties" = {
-        # Disable PID file creation
-        "pulse.properties" = {
-          "server.daemonize" = false;
-          "server.pid-file" = null;
-        };
-      };
-      "pulse.properties" = {
-        # Don't try to acquire org.pulseaudio.Server on D-Bus
-        "server.dbus-name" = null;
-      };
-    };
   };
 
   systemd.services.nqptp = {
@@ -87,6 +72,10 @@
     };
   };
 
+  systemd.user.services.pipewire.enable = false;
+  systemd.user.services.pipewire-pulse.enable = false;
+  systemd.user.services.wireplumber.enable = false;
+
   # Shairport-sync starts after PipeWire and nqptp are ready
   systemd.services.shairport-sync = {
     after = [ "pipewire.service" "pipewire-pulse.service" "nqptp.service" ];
@@ -95,30 +84,6 @@
     serviceConfig = {
       SupplementaryGroups = [ "audio" "pipewire" ];
       RestartSec = "5s";
-    };
-  };
-
-  systemd.services.pipewire = {
-    environment = {
-      # Disable D-Bus session dependencies for system-wide mode
-      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
-    };
-  };
-
-  systemd.services.pipewire-pulse = {
-    environment = {
-      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
-    };
-    serviceConfig = {
-      # Fix PID file location for system service
-      RuntimeDirectory = "pipewire";
-      RuntimeDirectoryMode = "0755";
-    };
-  };
-
-  systemd.services.wireplumber = {
-    environment = {
-      DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/dbus/system_bus_socket";
     };
   };
 
