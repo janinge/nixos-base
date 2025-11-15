@@ -15,7 +15,31 @@
     jack.enable = true;
 
     systemWide = true;
+
+    extraConfig.pipewire-pulse."10-systemwide" = {
+      "context.properties" = {
+        "pulse.min.req" = 0;
+        "pulse.default.req" = 0;
+      };
+
+      "pulse.properties" = {
+        "pulse.runtime-dir" = "/run/pipewire";
+      };
+    };
   };
+
+  systemd.user.services.pipewire.enable = false;
+  systemd.user.services.pipewire-pulse.enable = false;
+  systemd.user.services.wireplumber.enable = false;
+
+  systemd.services.pipewire-pulse.serviceConfig.Environment =
+    [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+
+  systemd.services.pipewire.serviceConfig.Environment =
+    [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+
+  systemd.services.wireplumber.serviceConfig.Environment =
+    [ "XDG_RUNTIME_DIR=/run/pipewire" ];
 
   systemd.services.nqptp = {
     description = "Not Quite PTP";
@@ -71,10 +95,6 @@
       };
     };
   };
-
-  systemd.user.services.pipewire.enable = false;
-  systemd.user.services.pipewire-pulse.enable = false;
-  systemd.user.services.wireplumber.enable = false;
 
   # Shairport-sync starts after PipeWire and nqptp are ready
   systemd.services.shairport-sync = {
@@ -133,6 +153,8 @@
     "d /var/cache/owntone 0750 owntone owntone -"
     "d /var/log 0755 root root -"
     "f /var/log/owntone.log 0640 owntone owntone -"
+    "d /run/pipewire 0755 root pipewire -"
+    "d /run/pipewire/pulse 0755 root pipewire -"
   ];
 
   systemd.services.owntone = {
