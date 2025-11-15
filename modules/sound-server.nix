@@ -26,6 +26,12 @@
         "pulse.runtime-dir" = "/run/pipewire";
       };
     };
+
+    extraConfig.pipewire-pulse."20-pidfile" = {
+      "pulse.properties" = {
+        "pulse.pid.file" = "/run/pipewire/pulse/pid";
+      };
+    };
   };
 
   systemd.user.services.pipewire.enable = false;
@@ -154,7 +160,8 @@
     "d /var/log 0755 root root -"
     "f /var/log/owntone.log 0640 owntone owntone -"
     "d /run/pipewire 0755 root pipewire -"
-    "d /run/pipewire/pulse 0755 root pipewire -"
+    "d /run/pipewire/pulse 0755 pipewire pipewire -"
+    "f /run/pipewire/pulse/pid 0644 pipewire pipewire -"
   ];
 
   systemd.services.owntone = {
