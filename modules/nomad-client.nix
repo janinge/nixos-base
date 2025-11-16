@@ -12,7 +12,6 @@ in
   services.nomad.settings = {
     plugin."nomad-driver-podman" = {
       config = {
-        socket_path = "unix:///run/podman/podman.sock";
       };
     };
 
@@ -88,9 +87,6 @@ in
       SupplementaryGroups = lib.mkForce [ "podman" ];
       DynamicUser = lib.mkForce false;
     };
-    after = [ "podman.socket" "podman.service" ];
-    requires = [ "podman.socket" ];
-    wants = [ "podman.service" ];
   };
 
   services.prometheus.exporters.node.enable = true;

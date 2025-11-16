@@ -10,6 +10,7 @@ in
     extraGroups = [ "podman" ];
     home = "/var/lib/nomad";
     description = "Nomad service user";
+    linger = true;
   };
 
   systemd.tmpfiles.rules = [
