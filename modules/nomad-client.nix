@@ -19,10 +19,13 @@ in
       server.enabled = false;
 
       plugin = {
-        "podman" = {
+        podman = {
           config = {
+            enabled = true;
             socket_path = "unix:///run/podman/podman.sock";
-            volumes.enabled = true;
+            volumes = {
+              enabled = true;
+            };
             gc = {
               image = true;
               image_delay = "3m";
@@ -74,25 +77,21 @@ in
     defaultNetwork.settings.dns_enabled = false;
   };
 
-  # Enable the Podman system socket
-  systemd.sockets.podman = {
-    enable = true;
-    wantedBy = [ "sockets.target" ];
-    socketConfig = {
-      ListenStream = "/run/podman/podman.sock";
-      SocketMode = "0660";
-      SocketGroup = "podman";
-    };
+  # Override the Podman socket to use system-wide location
+  systemd.sockets.podman.socketConfig = {
+    ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
+    SocketMode = "0660";
+    SocketGroup = "podman";
   };
 
+  # Override the Podman service configuration
   systemd.services.podman = {
-    enable = true;
     description = "Podman API Service";
     requires = [ "podman.socket" ];
     after = [ "podman.socket" ];
     serviceConfig = {
-      Type = "notify";
-      ExecStart = "${pkgs.podman}/bin/podman system service";
+      Type = lib.mkForce "notify";
+      ExecStart = lib.mkForce "${pkgs.podman}/bin/podman system service";
     };
   };
 
@@ -107,6 +106,8 @@ in
       # Override ExecStart to remove the -plugin-dir argument
       ExecStart = lib.mkForce "${config.services.nomad.package}/bin/nomad agent -config=/etc/nomad.json";
     };
+    after = [ "podman.socket" ];
+    requires = [ "podman.socket" ];
   };
 
   services.prometheus.exporters.node.enable = true;
