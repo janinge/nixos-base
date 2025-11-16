@@ -41,12 +41,15 @@ in {
   };
 
   services.seaweedfs = {
-    enable = true;
     volume = {
       enable = true;
-      port = 8080;
       dataDir = "/var/lib/seaweedfs/volumes";
-      maxVolumes = 200;
+    };
+
+    mount = {
+      mountPoint = "/mnt/seaweedfs";
+      cacheSizeMB = 2000;
+      allowOther = true;
     };
   };
 }

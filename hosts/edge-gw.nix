@@ -31,23 +31,10 @@ in {
     ];
   };
 
+  # SeaweedFS configuration
   services.seaweedfs = {
-    enable = true;
-    master = {
-      enable = true;
-      port = 9333;
-      volumeSizeLimitMB = 30000;
-    };
-    volume = {
-      enable = true;
-      port = 8080;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      maxVolumes = 100;
-    };
-    filer = {
-      enable = true;
-      port = 8888;
-    };
+    master.enable = true;
+    filer.enable = true;
   };
 
   services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {

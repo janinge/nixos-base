@@ -9,11 +9,25 @@ let
   # Find master nodes (nodes with isRegistry = true)
   masterNodes = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
   masterAddresses = lib.map (n: "${n.serviceIp}:9333") masterNodes;
+
+  # Use proper TOML format
+  tomlFormat = pkgs.formats.toml {};
+
+  # Filer configuration
+  filerConfig = {
+    leveldb2 = {
+      enabled = true;
+      dir = cfg.filer.dbDir;
+    };
+  };
+
+  filerToml = tomlFormat.generate "filer.toml" filerConfig;
+
+  # Determine if any component is enabled
+  isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
 in
 {
   options.services.seaweedfs = {
-    enable = mkEnableOption "SeaweedFS distributed file system";
-
     master = {
       enable = mkEnableOption "SeaweedFS master server";
       
@@ -84,10 +98,60 @@ in
         default = "/var/lib/seaweedfs/filer";
         description = "Directory to store filer metadata";
       };
+
+      dbDir = mkOption {
+        type = types.str;
+        default = "/var/lib/seaweedfs/filer/leveldb2";
+        description = "Directory for LevelDB database";
+      };
+    };
+
+    mount = mkOption {
+      type = types.nullOr (types.submodule {
+        options = {
+          mountPoint = mkOption {
+            type = types.str;
+            description = "Local path to mount the filer";
+            example = "/mnt/seaweedfs";
+          };
+
+          filerAddress = mkOption {
+            type = types.str;
+            default = "${nodeCfg.serviceIp}:${toString cfg.filer.port}";
+            description = "Filer address to connect to";
+          };
+
+          allowOther = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Allow other users to access the mount";
+          };
+
+          readOnly = mkOption {
+            type = types.bool;
+            default = false;
+            description = "Mount as read-only";
+          };
+
+          cacheDir = mkOption {
+            type = types.str;
+            default = "/var/cache/seaweedfs-mount";
+            description = "Directory for local file cache";
+          };
+
+          cacheSizeMB = mkOption {
+            type = types.int;
+            default = 1000;
+            description = "Cache size in MB";
+          };
+        };
+      });
+      default = null;
+      description = "FUSE mount configuration";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = mkIf isEnabled {
     
     # Create seaweedfs user and group
     users.groups.seaweedfs = {};
@@ -103,8 +167,13 @@ in
       "d /var/lib/seaweedfs 0750 seaweedfs seaweedfs -"
     ] ++ optional cfg.volume.enable
       "d ${cfg.volume.dataDir} 0750 seaweedfs seaweedfs -"
-    ++ optional cfg.filer.enable
-      "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -";
+    ++ optionals cfg.filer.enable [
+      "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
+      "d ${cfg.filer.dbDir} 0750 seaweedfs seaweedfs -"
+    ] ++ optionals (cfg.mount != null) [
+      "d ${cfg.mount.mountPoint} 0755 seaweedfs seaweedfs -"
+      "d ${cfg.mount.cacheDir} 0750 seaweedfs seaweedfs -"
+    ];
 
     # Master server service
     systemd.services.seaweedfs-master = mkIf cfg.master.enable {
@@ -116,6 +185,7 @@ in
         Type = "simple";
         User = "seaweedfs";
         Group = "seaweedfs";
+        WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed master \
             -ip=${nodeCfg.serviceIp} \
@@ -140,6 +210,7 @@ in
         Type = "simple";
         User = "seaweedfs";
         Group = "seaweedfs";
+        WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed volume \
             -ip=${nodeCfg.serviceIp} \
@@ -165,17 +236,51 @@ in
         Type = "simple";
         User = "seaweedfs";
         Group = "seaweedfs";
+        WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed filer \
             -ip=${nodeCfg.serviceIp} \
             -port=${toString cfg.filer.port} \
             -master=${concatStringsSep "," masterAddresses} \
-            -dataCenter=${cfg.volume.dataCenter}
+            -dataCenter=${cfg.volume.dataCenter} \
+            -defaultReplicaPlacement=001 \
+            -dirListLimit=100000 \
+            -config=${filerToml}
         '';
         Restart = "on-failure";
         RestartSec = "10s";
       };
     };
+
+    # FUSE mount service
+    systemd.services.seaweedfs-mount = mkIf (cfg.mount != null) {
+      description = "SeaweedFS FUSE Mount";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      requires = mkIf cfg.filer.enable [ "seaweedfs-filer.service" ];
+
+      serviceConfig = {
+        Type = "forking";
+        User = "seaweedfs";
+        Group = "seaweedfs";
+        ExecStart = ''
+          ${pkgs.seaweedfs}/bin/weed mount \
+            -filer=${cfg.mount.filerAddress} \
+            -dir=${cfg.mount.mountPoint} \
+            -cacheDir=${cfg.mount.cacheDir} \
+            -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
+            ${optionalString cfg.mount.allowOther "-allowOther"} \
+            ${optionalString cfg.mount.readOnly "-readOnly"} \
+            -dirAutoCreate
+        '';
+        ExecStop = "${pkgs.fuse}/bin/fusermount -u ${cfg.mount.mountPoint}";
+        Restart = "on-failure";
+        RestartSec = "10s";
+      };
+    };
+
+    # Enable FUSE support if mounting
+    boot.kernelModules = mkIf (cfg.mount != null) [ "fuse" ];
 
     environment.systemPackages = [ pkgs.seaweedfs ];
   };
