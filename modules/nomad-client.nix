@@ -16,6 +16,9 @@ in
       server.enabled = false;
 
       plugin = {
+        "docker" = {
+          config.enabled = false;
+        };
         "podman" = {
           config = {
             socket_path = "unix:///run/podman/podman.sock";
@@ -69,6 +72,28 @@ in
     enable = true;
     dockerCompat = false;
     defaultNetwork.settings.dns_enabled = false;
+  };
+
+  # Enable the Podman system socket
+  systemd.sockets.podman = {
+    enable = true;
+    wantedBy = [ "sockets.target" ];
+    socketConfig = {
+      ListenStream = "/run/podman/podman.sock";
+      SocketMode = "0660";
+      SocketGroup = "podman";
+    };
+  };
+
+  systemd.services.podman = {
+    enable = true;
+    description = "Podman API Service";
+    requires = [ "podman.socket" ];
+    after = [ "podman.socket" ];
+    serviceConfig = {
+      Type = "notify";
+      ExecStart = "${pkgs.podman}/bin/podman system service";
+    };
   };
 
   virtualisation.docker.enable = lib.mkForce false;
