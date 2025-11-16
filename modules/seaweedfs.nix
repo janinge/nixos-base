@@ -174,8 +174,8 @@ in
       "d ${cfg.filer.dbDir} 0750 seaweedfs seaweedfs -"
       "L+ /etc/seaweedfs/filer.toml - - - - ${filerToml}"
     ] ++ optionals (cfg.mount != null) [
-      "d ${cfg.mount.mountPoint} 0755 seaweedfs seaweedfs -"
-      "d ${cfg.mount.cacheDir} 0750 seaweedfs seaweedfs -"
+      "d ${cfg.mount.mountPoint} 0755 root root -"
+      "d ${cfg.mount.cacheDir} 0750 root root -"
     ];
 
     # Master server service
@@ -265,9 +265,9 @@ in
       path = [ pkgs.fuse ];
 
       serviceConfig = {
-        Type = "forking";
-        User = "seaweedfs";
-        Group = "seaweedfs";
+        Type = "simple";
+        User = "root";
+        Group = "root";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed mount \
             -filer='${concatStringsSep "," filerAddresses}' \
@@ -279,6 +279,7 @@ in
             -dirAutoCreate
         '';
         ExecStop = "${pkgs.fuse}/bin/fusermount -u ${cfg.mount.mountPoint}";
+        KillMode = "process";
         Restart = "on-failure";
         RestartSec = "10s";
       };
