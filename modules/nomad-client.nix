@@ -30,6 +30,8 @@ in
               image_delay = "3m";
             };
           };
+          # Step 2: Explicitly define the plugin executable path.
+          exec = "${pkgs.nomad-driver-podman}/bin/nomad-driver-podman";
         };
       };
 
