@@ -18,10 +18,11 @@ in
       };
       server.enabled = false;
 
-      plugin = {
-        podman = {
+      plugin = [
+        {
+          name = "podman";
+          args = [];
           config = {
-            enabled = true;
             socket_path = "unix:///run/podman/podman.sock";
             volumes = {
               enabled = true;
@@ -31,8 +32,8 @@ in
               image_delay = "3m";
             };
           };
-        };
-      };
+        }
+      ];
 
       consul = {
         client_auto_join = true;
@@ -79,8 +80,17 @@ in
 
   virtualisation.docker.enable = lib.mkForce false;
 
-  # Just override the socket location
-  systemd.sockets.podman.socketConfig.ListenStream = lib.mkForce "/run/podman/podman.sock";
+  # Fix the duplicate ListenStream entries by clearing first
+  systemd.sockets.podman.socketConfig = {
+    ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
+    SocketMode = "0660";
+    SocketGroup = "podman";
+  };
+
+  # Keep the Podman service running
+  systemd.services.podman = {
+    wantedBy = [ "multi-user.target" ];
+  };
 
   systemd.services.nomad = {
     serviceConfig = {
@@ -91,8 +101,9 @@ in
       # Override ExecStart to remove the -plugin-dir argument
       ExecStart = lib.mkForce "${config.services.nomad.package}/bin/nomad agent -config=/etc/nomad.json";
     };
-    after = [ "podman.socket" ];
+    after = [ "podman.socket" "podman.service" ];
     requires = [ "podman.socket" ];
+    wants = [ "podman.service" ];
   };
 
   services.prometheus.exporters.node.enable = true;
