@@ -55,7 +55,7 @@ in
       
       port = mkOption {
         type = types.port;
-        default = 8080;
+        default = 1133;
         description = "Port for volume server";
       };
 

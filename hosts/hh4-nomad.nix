@@ -49,7 +49,7 @@ in {
     mount = {
       mountPoint = "/mnt/seaweedfs";
       cacheSizeMB = 2000;
-      allowOther = true;
+      allowOthers = true;
     };
   };
 }
