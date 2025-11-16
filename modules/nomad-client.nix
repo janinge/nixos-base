@@ -12,13 +12,13 @@ in
       client = {
         enabled = true;
         cni_config_dir = "/etc/cni/net.d";
+        options = {
+          "driver.denylist" = "docker";
+        };
       };
       server.enabled = false;
 
       plugin = {
-        "docker" = {
-          config.enabled = false;
-        };
         "podman" = {
           config = {
             socket_path = "unix:///run/podman/podman.sock";
