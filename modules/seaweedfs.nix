@@ -267,7 +267,7 @@ in
         Group = "seaweedfs";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed mount \
-            -filer='${concatStringsSep "," masterAddresses}' \
+            -filer='${concatStringsSep "," filerAddresses}' \
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
             -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
