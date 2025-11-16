@@ -121,7 +121,7 @@ in
             description = "Filer address to connect to";
           };
 
-          allowOther = mkOption {
+          allowOthers = mkOption {
             type = types.bool;
             default = true;
             description = "Allow other users to access the mount";
@@ -270,7 +270,7 @@ in
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
             -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
-            ${optionalString cfg.mount.allowOther "-allowOther"} \
+            ${optionalString cfg.mount.allowOthers "-allowOthers"} \
             ${optionalString cfg.mount.readOnly "-readOnly"} \
             -dirAutoCreate
         '';
