@@ -7,6 +7,8 @@ in
 {
   imports = [ ./nomad.nix ];
 
+  services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
+
   services.nomad.settings = lib.mkMerge [
     {
       client = {
@@ -30,8 +32,6 @@ in
               image_delay = "3m";
             };
           };
-          # Step 2: Explicitly define the plugin executable path.
-          exec = "${pkgs.nomad-driver-podman}/bin/nomad-driver-podman";
         };
       };
 
@@ -98,8 +98,6 @@ in
       Group = "nomad";
       SupplementaryGroups = lib.mkForce [ "podman" ];
       DynamicUser = lib.mkForce false;
-      # Override ExecStart to remove the -plugin-dir argument
-      ExecStart = lib.mkForce "${config.services.nomad.package}/bin/nomad agent -config=/etc/nomad.json";
     };
     after = [ "podman.socket" "podman.service" ];
     requires = [ "podman.socket" ];
