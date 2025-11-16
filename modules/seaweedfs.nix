@@ -287,6 +287,9 @@ in
     # Enable FUSE support if mounting
     boot.kernelModules = mkIf (cfg.mount != null) [ "fuse" ];
 
+    # Enable user_allow_other in /etc/fuse.conf if allowOthers is enabled
+    programs.fuse.userAllowOther = mkIf (cfg.mount != null && cfg.mount.allowOthers) true;
+
     environment.systemPackages = [ pkgs.seaweedfs ] ++ optional (cfg.mount != null) pkgs.fuse;
   };
 }
