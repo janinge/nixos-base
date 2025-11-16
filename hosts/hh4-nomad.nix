@@ -8,6 +8,7 @@ in {
     ../modules/nomad-client.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
+    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -37,5 +38,15 @@ in {
     extraSetFlags = [
       "--advertise-routes=${cfg.routedSubnet}"
     ];
+  };
+
+  services.seaweedfs = {
+    enable = true;
+    volume = {
+      enable = true;
+      port = 8080;
+      dataDir = "/var/lib/seaweedfs/volumes";
+      maxVolumes = 200;
+    };
   };
 }
