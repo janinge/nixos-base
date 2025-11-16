@@ -261,6 +261,9 @@ in
       after = [ "network.target" ];
       requires = mkIf cfg.filer.enable [ "seaweedfs-filer.service" ];
 
+      # Add fuse to the PATH
+      path = [ pkgs.fuse ];
+
       serviceConfig = {
         Type = "forking";
         User = "seaweedfs";
@@ -284,6 +287,6 @@ in
     # Enable FUSE support if mounting
     boot.kernelModules = mkIf (cfg.mount != null) [ "fuse" ];
 
-    environment.systemPackages = [ pkgs.seaweedfs ];
+    environment.systemPackages = [ pkgs.seaweedfs ] ++ optional (cfg.mount != null) pkgs.fuse;
   };
 }
