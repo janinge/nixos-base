@@ -165,11 +165,13 @@ in
     # Create data directories
     systemd.tmpfiles.rules = [
       "d /var/lib/seaweedfs 0750 seaweedfs seaweedfs -"
+      "d /etc/seaweedfs 0755 root root -"
     ] ++ optional cfg.volume.enable
       "d ${cfg.volume.dataDir} 0750 seaweedfs seaweedfs -"
     ++ optionals cfg.filer.enable [
       "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
       "d ${cfg.filer.dbDir} 0750 seaweedfs seaweedfs -"
+      "L+ /etc/seaweedfs/filer.toml - - - - ${filerToml}"
     ] ++ optionals (cfg.mount != null) [
       "d ${cfg.mount.mountPoint} 0755 seaweedfs seaweedfs -"
       "d ${cfg.mount.cacheDir} 0750 seaweedfs seaweedfs -"
@@ -244,8 +246,7 @@ in
             -master=${concatStringsSep "," masterAddresses} \
             -dataCenter=${cfg.volume.dataCenter} \
             -defaultReplicaPlacement=001 \
-            -dirListLimit=100000 \
-            -config=${filerToml}
+            -dirListLimit=100000
         '';
         Restart = "on-failure";
         RestartSec = "10s";
