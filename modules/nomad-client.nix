@@ -13,13 +13,6 @@ in
     plugin."nomad-driver-podman" = {
       config = {
         socket_path = "unix:///run/podman/podman.sock";
-        volumes = {
-          enabled = true;
-        };
-        gc = {
-          image = true;
-          image_delay = "3m";
-        };
       };
     };
 
