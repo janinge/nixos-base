@@ -18,10 +18,8 @@ in
       };
       server.enabled = false;
 
-      plugin = [
-        {
-          name = "podman";
-          args = [];
+      plugin = {
+        podman = {
           config = {
             socket_path = "unix:///run/podman/podman.sock";
             volumes = {
@@ -32,8 +30,8 @@ in
               image_delay = "3m";
             };
           };
-        }
-      ];
+        };
+      };
 
       consul = {
         client_auto_join = true;
