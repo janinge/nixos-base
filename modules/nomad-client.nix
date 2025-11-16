@@ -77,25 +77,10 @@ in
     defaultNetwork.settings.dns_enabled = false;
   };
 
-  # Override the Podman socket to use system-wide location
-  systemd.sockets.podman.socketConfig = {
-    ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
-    SocketMode = "0660";
-    SocketGroup = "podman";
-  };
-
-  # Override the Podman service configuration
-  systemd.services.podman = {
-    description = "Podman API Service";
-    requires = [ "podman.socket" ];
-    after = [ "podman.socket" ];
-    serviceConfig = {
-      Type = lib.mkForce "notify";
-      ExecStart = lib.mkForce "${pkgs.podman}/bin/podman system service";
-    };
-  };
-
   virtualisation.docker.enable = lib.mkForce false;
+
+  # Just override the socket location
+  systemd.sockets.podman.socketConfig.ListenStream = lib.mkForce "/run/podman/podman.sock";
 
   systemd.services.nomad = {
     serviceConfig = {
