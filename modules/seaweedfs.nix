@@ -9,6 +9,7 @@ let
   # Find master nodes (nodes with isRegistry = true)
   masterNodes = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
   masterAddresses = lib.map (n: "${n.serviceIp}:9333") masterNodes;
+  filerAddresses = lib.map (n: "${n.serviceIp}:8888") masterNodes;
 
   # Use proper TOML format
   tomlFormat = pkgs.formats.toml {};
@@ -266,7 +267,7 @@ in
         Group = "seaweedfs";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed mount \
-            -filer=${cfg.mount.filerAddress} \
+            -filer='${concatStringsSep "," masterAddresses}' \
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
             -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
