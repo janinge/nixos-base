@@ -10,7 +10,7 @@ in
   services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 
   services.nomad.settings = {
-    plugin.podman = {
+    plugin."nomad-driver-podman" = {
       config = {
         socket_path = "unix:///run/podman/podman.sock";
         volumes = {
@@ -105,4 +105,12 @@ in
     enable = true;
     listenAddress = "0.0.0.0";
   };
+
+  environment.systemPackages = with pkgs; [
+    nomad-driver-podman
+    cni-plugins
+    podman
+    podman-tui
+    dive
+  ];
 }
