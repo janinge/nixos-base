@@ -9,37 +9,33 @@ in
 
   services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 
-  services.nomad.settings = lib.mkMerge [
-    {
-      client = {
-        enabled = true;
-        cni_config_dir = "/etc/cni/net.d";
-        options = {
-          "driver.denylist" = "docker";
+  services.nomad.settings = {
+    plugin.podman = {
+      config = {
+        socket_path = "unix:///run/podman/podman.sock";
+        volumes = {
+          enabled = true;
+        };
+        gc = {
+          image = true;
+          image_delay = "3m";
         };
       };
-      server.enabled = false;
+    };
 
-      plugin = {
-        podman = {
-          config = {
-            socket_path = "unix:///run/podman/podman.sock";
-            volumes = {
-              enabled = true;
-            };
-            gc = {
-              image = true;
-              image_delay = "3m";
-            };
-          };
-        };
+    client = {
+      enabled = true;
+      cni_config_dir = "/etc/cni/net.d";
+      options = {
+        "driver.denylist" = "docker";
       };
+    };
+    server.enabled = false;
 
-      consul = {
-        client_auto_join = true;
-      };
-    }
-  ];
+    consul = {
+      client_auto_join = true;
+    };
+  };
 
   environment.etc."cni/net.d/nomad.conflist".text = lib.generators.toJSON {} {
     cniVersion = "0.4.0";
