@@ -38,7 +38,7 @@
 
       "pulse.rules" = [
         {
-          matches = [ { "pulse.module.name" = "module-native-protocol-tcp"; } ];
+          matches = [ { } ];
           actions = {
             update-props = {
               "pulse.tcp.listen" = "127.0.0.1";
@@ -62,6 +62,7 @@
     Environment = [ "XDG_RUNTIME_DIR=/run/pipewire" ];
     RuntimeDirectory = "pipewire/pulse";
     RuntimeDirectoryMode = "0755";
+    ExecStartPost = "${pkgs.coreutils}/bin/chmod 0777 /run/pipewire/pulse/native";
   };
 
   systemd.services.pipewire.serviceConfig = {
@@ -153,6 +154,7 @@
     documentation = [ "https://github.com/librespot-org/librespot" ];
     after = [ "network.target" "sound.target" "pipewire.service" "pipewire-pulse.service" ];
     wants = [ "avahi-daemon.service" "pipewire-pulse.service" ];
+    requires = [ "pipewire-pulse.service" ];
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
