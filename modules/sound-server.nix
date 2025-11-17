@@ -62,7 +62,6 @@
     Environment = [ "XDG_RUNTIME_DIR=/run/pipewire" ];
     RuntimeDirectory = "pipewire/pulse";
     RuntimeDirectoryMode = "0755";
-    ExecStartPost = "${pkgs.coreutils}/bin/chmod 0777 /run/pipewire/pulse/native";
   };
 
   systemd.services.pipewire.serviceConfig = {
