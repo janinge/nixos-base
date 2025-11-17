@@ -165,7 +165,6 @@
           withAvahi = false;
         }}/bin/librespot \
           --name "Hiss" \
-          --backend pulseaudio \
           --device-type speaker \
           --bitrate 320 \
           --cache /var/cache/librespot
