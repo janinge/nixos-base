@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, pkgs-unstable, lib, ... }:
 
 {
   security.rtkit.enable = true;
@@ -137,7 +137,12 @@
     serviceConfig = {
       Type = "simple";
       ExecStart = ''
-        ${pkgs.librespot.override { withPulseAudio = true; }}/bin/librespot \
+        ${pkgs-unstable.librespot.override {
+          withPulseAudio = true;
+          withDNS-SD = true;
+          withMDNS = false;
+          withAvahi = false;
+        }}/bin/librespot \
           --name "Hiss" \
           --backend pulseaudio \
           --device-type speaker \
@@ -260,7 +265,8 @@
     alsa-utils
     owntone
     nqptp
-    (librespot.override {
+  ] ++ [
+    (pkgs-unstable.librespot.override {
       withPulseAudio = true;
       withDNS-SD = true;
       withMDNS = false;
