@@ -16,9 +16,24 @@
 
     systemWide = true;
 
+    # Increase buffer sizes for robustness over latency
+    extraConfig.pipewire."99-low-latency" = {
+      "context.properties" = {
+        "default.clock.rate" = 48000;
+        "default.clock.quantum" = 2048;        # Larger quantum (typically 1024)
+        "default.clock.min-quantum" = 2048;
+        "default.clock.max-quantum" = 8192;
+      };
+    };
+
     extraConfig.pipewire-pulse."10-systemwide" = {
       "pulse.properties" = {
         "pulse.runtime-dir" = "/run/pipewire";
+      };
+
+      "stream.properties" = {
+        "node.latency" = "2048/48000";         # ~42ms latency
+        "resample.quality" = 10;               # Higher quality resampling
       };
 
       "pulse.rules" = [
@@ -28,6 +43,10 @@
             update-props = {
               "pulse.tcp.listen" = "127.0.0.1";
               "pulse.tcp.port" = 4713;
+              "pulse.min.req" = "2048/48000";    # Minimum request size
+              "pulse.default.req" = "4096/48000"; # Default request (~85ms)
+              "pulse.min.quantum" = "2048/48000";
+              "pulse.max.quantum" = "8192/48000"; # Max buffer (~170ms)
             };
           };
         }
@@ -45,8 +64,10 @@
     RuntimeDirectoryMode = "0755";
   };
 
-  systemd.services.pipewire.serviceConfig.Environment =
-    [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+  systemd.services.pipewire.serviceConfig = {
+    Environment = [ "XDG_RUNTIME_DIR=/run/pipewire" ];
+    Nice = -11;
+  };
 
   systemd.services.wireplumber.serviceConfig.Environment =
     [ "XDG_RUNTIME_DIR=/run/pipewire" ];
@@ -171,6 +192,7 @@
     environment = {
       PULSE_SERVER = "/run/pipewire/pulse/native";
       PULSE_RUNTIME_PATH = "/run/pipewire/pulse";
+      PULSE_LATENCY_MSEC = "100";
     };
   };
 
