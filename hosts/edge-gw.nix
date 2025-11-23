@@ -7,7 +7,7 @@ in {
     ../modules/power.nix
     ../modules/headscale.nix
     ../modules/coredns.nix
-    ../modules/nomad-server.nix
+    ../modules/nomad.nix
     ../modules/seaweedfs.nix
   ];
 
@@ -30,6 +30,9 @@ in {
       "--advertise-routes=${cfg.routedSubnet}"
     ];
   };
+
+  # Enable Nomad Server
+  cluster.nomad.server.enable = true;
 
   # SeaweedFS configuration
   services.seaweedfs = {

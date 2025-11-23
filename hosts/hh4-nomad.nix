@@ -5,7 +5,7 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/power.nix
-    ../modules/nomad-client.nix
+    ../modules/nomad.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
     ../modules/seaweedfs.nix
@@ -39,6 +39,9 @@ in {
       "--advertise-routes=${cfg.routedSubnet}"
     ];
   };
+
+  # Enable Nomad Client
+  cluster.nomad.client.enable = true;
 
   services.seaweedfs = {
     volume = {
