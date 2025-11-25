@@ -38,12 +38,35 @@ in
         restartUnits = [ "consul.service" ];
       };
 
+      sops.templates."nomad-secrets.json" = {
+        content = ''
+          {
+            "encrypt": "${config.sops.placeholder.nomad_gossip_key}"
+          }
+        '';
+        owner = "nomad";
+        group = "nomad";
+        mode = "0440";
+      };
+
+      sops.templates."consul-secrets.json" = {
+        content = ''
+          {
+            "encrypt": "${config.sops.placeholder.consul_gossip_key}"
+          }
+        '';
+        owner = "consul";
+        group = "consul";
+        mode = "0440";
+      };
+
       systemd.tmpfiles.rules = [
         "d /var/lib/nomad 0750 nomad nomad -"
       ];
 
       services.nomad = {
         enable = true;
+        extraSettingsPaths = [ config.sops.templates."nomad-secrets.json".path ];
         settings = {
           name = hostName;
           data_dir = "/var/lib/nomad";
@@ -62,6 +85,7 @@ in
 
       services.consul = {
         enable = true;
+        extraConfigFiles = [ config.sops.templates."consul-secrets.json".path ];
         extraConfig = {
           node_name = "consul-${hostName}";
           bind_addr = nodeCfg.serviceIp;
@@ -82,7 +106,6 @@ in
         server = {
           enabled = true;
           bootstrap_expect = 1;
-          encrypt_file = config.sops.secrets.nomad_gossip_key.path;
         };
         advertise = {
           http = nodeCfg.serviceIp;
@@ -100,7 +123,6 @@ in
         client_addr = "127.0.0.1 ${nodeCfg.serviceIp}";
         server = true;
         bootstrap_expect = 1;
-        encrypt_file = config.sops.secrets.consul_gossip_key.path;
         ui_config = {
           enabled = true;
         };
