@@ -43,7 +43,24 @@
           };
         })
         (lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n) hostFiles);
+
+    supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    forAllSystems = lib.genAttrs supportedSystems;
   in {
     nixosConfigurations = mkHostConfigs;
+
+    devShells = forAllSystems (devSystem:
+      let
+        pkgs = nixpkgs.legacyPackages.${devSystem};
+      in {
+        default = pkgs.mkShell {
+          packages = with pkgs; [
+            sops
+            ssh-to-age
+            age
+            nixos-anywhere
+          ];
+        };
+      });
   };
 }

@@ -29,6 +29,15 @@ in
         linger = true;
       };
 
+      sops.secrets.nomad_gossip_key = {
+        owner = "nomad";
+        restartUnits = [ "nomad.service" ];
+      };
+      sops.secrets.consul_gossip_key = {
+        owner = "consul";
+        restartUnits = [ "consul.service" ];
+      };
+
       systemd.tmpfiles.rules = [
         "d /var/lib/nomad 0750 nomad nomad -"
       ];
@@ -40,7 +49,7 @@ in
           data_dir = "/var/lib/nomad";
           bind_addr = nodeCfg.serviceIp;
           telemetry.publish_allocation_metrics = true;
-          datacenter = "earth";
+          datacenter = nodeCfg.datacenter;
           consul = {
             address = "127.0.0.1:8500";
             auto_advertise = true;
@@ -73,6 +82,7 @@ in
         server = {
           enabled = true;
           bootstrap_expect = 1;
+          encrypt_file = config.sops.secrets.nomad_gossip_key.path;
         };
         advertise = {
           http = nodeCfg.serviceIp;
@@ -90,6 +100,7 @@ in
         client_addr = "127.0.0.1 ${nodeCfg.serviceIp}";
         server = true;
         bootstrap_expect = 1;
+        encrypt_file = config.sops.secrets.consul_gossip_key.path;
         ui_config = {
           enabled = true;
         };

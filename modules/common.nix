@@ -17,8 +17,15 @@
       HostKeyAlgorithms = "ssh-ed25519";
       PubkeyAcceptedAlgorithms = "ssh-ed25519";
     };
+    hostKeys = [{
+      type = "ed25519";
+      path = "/etc/ssh/ssh_host_ed25519_key";
+    }];
     ports = [ 36022 ];
   };
+
+  sops.defaultSopsFile = ../secrets/secrets.yaml;
+  sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
 
   users.groups = {
     tm = { };

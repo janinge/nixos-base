@@ -1,0 +1,12 @@
+keys:
+  - &janinge age1rjrd5zds2ss2rndvh77ae877l9qtpx8adkcah7mr2cp593kmuuqq77348n
+  - &hh4_nomad age1hfwhce0u6x47u8e2zn826d38sgw3krp9lu8akdh4mua2e7505u9szl65fd
+  - &edge_gw age13g3dmcem79wmq832v4um0wm95gqx25nkn5npl33a66yv9m0a7udshywt3z
+
+creation_rules:
+  - path_regex: secrets.yaml$
+    key_groups:
+      - age:
+          - *janinge
+          - *hh4_nomad
+          - *edge_gw
