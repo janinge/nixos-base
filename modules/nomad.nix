@@ -18,7 +18,6 @@ in
   };
 
   config = lib.mkMerge [
-    # Common Configuration (Applied if either role is enabled)
     (lib.mkIf (cfg.server.enable || cfg.client.enable) {
       users.groups.nomad = {};
       users.users.nomad = {
@@ -236,6 +235,15 @@ in
           Group = "nomad";
           SupplementaryGroups = lib.mkForce [ "podman" ];
           DynamicUser = lib.mkForce false;
+
+          ProtectSystem = "full";
+          ProtectHome = true;
+          PrivateTmp = true;
+          NoNewPrivileges = true; # Prevent SUID binaries
+
+          # CAP_NET_ADMIN is needed for CNI network creation
+          CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
+          AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" ];
         };
       };
 
