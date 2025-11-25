@@ -39,22 +39,14 @@ in
       };
 
       sops.templates."nomad-secrets.json" = {
-        content = ''
-          {
-            "encrypt": "${config.sops.placeholder.nomad_gossip_key}"
-          }
-        '';
+        content = ''{ "server": { "encrypt": "${config.sops.placeholder.nomad_gossip_key}" } }'';
         owner = "nomad";
         group = "nomad";
         mode = "0440";
       };
 
       sops.templates."consul-secrets.json" = {
-        content = ''
-          {
-            "encrypt": "${config.sops.placeholder.consul_gossip_key}"
-          }
-        '';
+        content = ''{ "encrypt": "${config.sops.placeholder.consul_gossip_key}" }'';
         owner = "consul";
         group = "consul";
         mode = "0440";
