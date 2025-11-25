@@ -237,9 +237,9 @@ in
           DynamicUser = lib.mkForce false;
 
           ProtectSystem = "full";
-          ProtectHome = true;
+          ProtectHome = false;
           PrivateTmp = true;
-          NoNewPrivileges = true; # Prevent SUID binaries
+          NoNewPrivileges = false;
 
           # CAP_NET_ADMIN is needed for CNI network creation
           CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
