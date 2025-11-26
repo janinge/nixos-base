@@ -30,29 +30,7 @@ in {
     ];
   };
 
-  # Enable Nomad Server
   cluster.nomad.server.enable = true;
-
-  # SeaweedFS configuration
-  services.seaweedfs = {
-    master.enable = true;
-    filer.enable = true;
-  };
-
-  services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {
-    entryPoints = [ "tailnet" ];
-    service = "seaweedfs";
-    rule = "Host(`seaweedfs.h00t.works`)";
-    tls = { certResolver = "letsencrypt"; };
-  };
-
-  services.traefik.dynamicConfigOptions.http.services.seaweedfs = {
-    loadBalancer = {
-      servers = [
-        { url = "http://${cfg.serviceIp}:9333"; }
-      ];
-    };
-  };
 
   networking = {
     nat = {

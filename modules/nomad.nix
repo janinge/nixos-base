@@ -6,6 +6,14 @@ let
   # Helper variables for client configuration
   consulServers = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
   consulJoin = lib.map (n: n.serviceIp) consulServers;
+
+  wildcardTls = {
+    certResolver = "letsencrypt";
+    domains = [{
+      main = "h00t.works";
+      sans = [ "*.h00t.works" ];
+    }];
+  };
 in
 {
   options.cluster.nomad = {
@@ -120,6 +128,30 @@ in
         };
       };
 
+      sops.secrets.aws_route53_access_key_id = {
+        owner = "traefik";
+        restartUnits = [ "traefik.service" ];
+      };
+      sops.secrets.aws_route53_secret_access_key = {
+        owner = "traefik";
+        restartUnits = [ "traefik.service" ];
+      };
+
+      sops.templates."traefik-aws.env" = {
+        content = ''
+          AWS_ACCESS_KEY_ID=${config.sops.placeholder.aws_route53_access_key_id}
+          AWS_SECRET_ACCESS_KEY=${config.sops.placeholder.aws_route53_secret_access_key}
+          AWS_REGION=us-east-1
+          AWS_HOSTED_ZONE_ID=Z00024711XAQWYV6Y3F0V
+        '';
+        owner = "traefik";
+      };
+
+      # Inject credentials into Traefik
+      systemd.services.traefik.serviceConfig = {
+        EnvironmentFile = [ config.sops.templates."traefik-aws.env".path ];
+      };
+
       services.traefik = {
         enable = true;
         staticConfigOptions = {
@@ -139,7 +171,10 @@ in
           };
           certificatesResolvers.letsencrypt.acme = {
             storage = "/var/lib/traefik/acme.json";
-            httpChallenge.entryPoint = "web";
+            dnsChallenge = {
+              provider = "route53";
+              delayBeforeCheck = 60;
+            };
           };
         };
 
@@ -150,19 +185,19 @@ in
                 entryPoints = [ "tailnet" ];
                 service = "api@internal";
                 rule = "Host(`traefik.h00t.works`)";
-                tls = { certResolver = "letsencrypt"; };
+                tls = wildcardTls;
               };
               nomad-ui = {
                 entryPoints = [ "tailnet" ];
                 service = "nomad-ui";
                 rule = "Host(`nomad.h00t.works`)";
-                tls = { certResolver = "letsencrypt"; };
+                tls = wildcardTls;
               };
               consul-ui = {
                 entryPoints = [ "tailnet" ];
                 service = "consul-ui";
                 rule = "Host(`consul.h00t.works`)";
-                tls = { certResolver = "letsencrypt"; };
+                tls = wildcardTls;
               };
             };
             services = {
