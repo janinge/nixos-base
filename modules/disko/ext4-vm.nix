@@ -1,5 +1,7 @@
-{ config, lib, pkgs, modulesPath, ... }:
-
+{ config, lib, pkgs, modulesPath, nodes, hostName, ... }:
+let
+  rootDevice = nodes.${hostName}.rootDevice or "/dev/vda";
+in
 {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
@@ -9,7 +11,7 @@
   disko.devices = {
     disk.main = {
       type = "disk";
-      device = "/dev/vda";
+      device = rootDevice;
       content = {
         type = "gpt";
         partitions = {

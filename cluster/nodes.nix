@@ -21,6 +21,18 @@
     isRegistry = true;
   };
 
+  cb-weed = {
+    datacenter = "fra-cb";
+    hostId = "1f4f0019";
+    diskLayout = "ext4-vm";
+    rootDevice = "/dev/sda";
+    routedSubnet = "10.42.21.0/24";
+    serviceIp = "10.42.21.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens18";
+    isRegistry = true;
+  };
+
   hh4-nomad = {
     datacenter = "bgo-hh";
     hostId = "f2d31c54";

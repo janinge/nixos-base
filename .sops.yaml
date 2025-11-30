@@ -2,6 +2,8 @@ keys:
   - &janinge age1rjrd5zds2ss2rndvh77ae877l9qtpx8adkcah7mr2cp593kmuuqq77348n
   - &hh4_nomad age1hfwhce0u6x47u8e2zn826d38sgw3krp9lu8akdh4mua2e7505u9szl65fd
   - &edge_gw age13g3dmcem79wmq832v4um0wm95gqx25nkn5npl33a66yv9m0a7udshywt3z
+  - &lw_gw age1r8myunsfjm29rvzs6lra9sh8lnu93dfyxu8k58kr23qujt062c8sznz074
+  - &cb_weed age1j9jfsf0aw3fkavmndpr4k6wcm0uyzq64jgerz9gace87u8v6659s4shh97
 
 creation_rules:
   - path_regex: secrets.yaml$
@@ -10,3 +12,5 @@ creation_rules:
           - *janinge
           - *hh4_nomad
           - *edge_gw
+          - *lw_gw
+          - *cb_weed
