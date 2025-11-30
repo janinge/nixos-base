@@ -35,6 +35,13 @@ in
         home = "/var/lib/nomad";
         description = "Nomad service user";
         linger = true;
+
+        subUidRanges = [
+          { startUid = 100000; count = 65536; }
+        ];
+        subGidRanges = [
+          { startGid = 100000; count = 65536; }
+        ];
       };
 
       sops.secrets.nomad_gossip_key = {
