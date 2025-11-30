@@ -171,7 +171,7 @@ in
           };
           providers.consulCatalog = {
             endpoint.address = "127.0.0.1:8500";
-            exposedByDefault = false;
+            exposedByDefault = true;
             prefix = "traefik";
           };
           certificatesResolvers.letsencrypt.acme = {
