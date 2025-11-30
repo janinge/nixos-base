@@ -136,6 +136,10 @@ in
         owner = "traefik";
         restartUnits = [ "traefik.service" ];
       };
+      sops.secrets.acme_email = {
+        owner = "traefik";
+        restartUnits = [ "traefik.service" ];
+      };
 
       sops.templates."traefik-aws.env" = {
         content = ''
@@ -143,6 +147,7 @@ in
           AWS_SECRET_ACCESS_KEY=${config.sops.placeholder.aws_route53_secret_access_key}
           AWS_REGION=us-east-1
           AWS_HOSTED_ZONE_ID=Z00024711XAQWYV6Y3F0V
+          TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${config.sops.placeholder.acme_email}
         '';
         owner = "traefik";
       };
@@ -203,7 +208,7 @@ in
             services = {
               nomad-ui = {
                 loadBalancer = {
-                  servers = [ { url = "http://127.0.0.1:4646"; } ];
+                  servers = [ { url = "http://${nodeCfg.serviceIp}:4646"; } ];
                 };
               };
               consul-ui = {
