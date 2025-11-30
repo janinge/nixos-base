@@ -1,4 +1,4 @@
-{ config, pkgs, pkgs-unstable, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   security.rtkit.enable = true;
@@ -159,7 +159,7 @@
     serviceConfig = {
       Type = "simple";
       ExecStart = ''
-        ${pkgs-unstable.librespot.override {
+        ${pkgs.librespot.override {
           withPulseAudio = true;
           withDNS-SD = true;
           withMDNS = false;
@@ -287,8 +287,7 @@
     alsa-utils
     owntone
     nqptp
-  ] ++ [
-    (pkgs-unstable.librespot.override {
+    (librespot.override {
       withPulseAudio = true;
       withDNS-SD = true;
       withMDNS = false;

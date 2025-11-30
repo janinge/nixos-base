@@ -2,7 +2,7 @@
   description = "Homelab cluster: Nomad, Consul, Traefik, Headscale...";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05-small";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11-small";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     disko.url = "github:nix-community/disko";
     sops-nix.url = "github:Mic92/sops-nix";
