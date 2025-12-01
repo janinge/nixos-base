@@ -244,6 +244,14 @@ in
           options = {
             "driver.denylist" = "docker";
           };
+
+          # Define a specific host network for services to bind to
+          host_network = {
+            service = {
+              cidr = "${nodeCfg.serviceIp}/32";
+              interface = nodeCfg.serviceBridge;
+            };
+          };
         };
 
         advertise = {
@@ -306,8 +314,10 @@ in
       # Keep the Podman service running
       systemd.services.podman = {
         wantedBy = [ "multi-user.target" ];
-        serviceConfig.Environment = [
-          "PODMAN_LOG_LEVEL=warn"
+
+        serviceConfig.ExecStart = lib.mkForce [
+          ""
+          "${pkgs.podman}/bin/podman --log-level=warn system service --time=0"
         ];
       };
 
