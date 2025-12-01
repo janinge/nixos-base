@@ -245,6 +245,13 @@ in
             "driver.denylist" = "docker";
           };
         };
+
+        advertise = {
+          http = nodeCfg.serviceIp;
+          rpc = nodeCfg.serviceIp;
+          serf = nodeCfg.serviceIp;
+        };
+
         server.enabled = false;
 
         consul = {
@@ -299,6 +306,9 @@ in
       # Keep the Podman service running
       systemd.services.podman = {
         wantedBy = [ "multi-user.target" ];
+        serviceConfig.Environment = [
+          "PODMAN_LOG_LEVEL=warn"
+        ];
       };
 
       systemd.services.nomad = {
