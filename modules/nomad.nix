@@ -167,13 +167,6 @@ in
       services.traefik = {
         enable = true;
         staticConfigOptions = {
-          log = {
-            level = "DEBUG";
-          };
-          accessLog = {
-            bufferingSize = 0;
-          };
-
           api = {
             dashboard = true;
             insecure = false;
