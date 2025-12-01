@@ -167,6 +167,13 @@ in
       services.traefik = {
         enable = true;
         staticConfigOptions = {
+          log = {
+            level = "DEBUG";
+          };
+          accessLog = {
+            bufferingSize = 0;
+          };
+
           api = {
             dashboard = true;
             insecure = false;
@@ -309,16 +316,6 @@ in
         ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
         SocketMode = "0660";
         SocketGroup = "podman";
-      };
-
-      # Keep the Podman service running
-      systemd.services.podman = {
-        wantedBy = [ "multi-user.target" ];
-
-        serviceConfig.ExecStart = lib.mkForce [
-          ""
-          "${pkgs.podman}/bin/podman --log-level=warn system service --time=0"
-        ];
       };
 
       systemd.services.nomad = {
