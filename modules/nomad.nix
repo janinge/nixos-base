@@ -7,6 +7,8 @@ let
   consulServers = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
   consulJoin = lib.map (n: n.serviceIp) consulServers;
 
+  serverCount = lib.length consulServers;
+
   wildcardTls = {
     certResolver = "letsencrypt";
     domains = [{
@@ -129,7 +131,8 @@ in
       services.consul.extraConfig = {
         client_addr = "127.0.0.1 ${nodeCfg.serviceIp}";
         server = true;
-        bootstrap_expect = 1;
+        bootstrap_expect = serverCount;
+        retry_join = consulJoin;
         ui_config = {
           enabled = true;
         };
