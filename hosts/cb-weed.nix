@@ -47,6 +47,11 @@ in {
 
   cluster.nomad.server.enable = true;
 
+  services.seaweedfs = {
+    master.enable = true;
+    volume.enable = true;
+  };
+
   networking = {
     nat = {
       enable = true;

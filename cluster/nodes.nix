@@ -8,17 +8,8 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     isRegistry = true;
-  };
-
-  lw-gw = {
-    datacenter = "ams-lw";
-    hostId = "866330b1";
-    diskLayout = "ext4-vm";
-    routedSubnet = "10.42.3.0/24";
-    serviceIp = "10.42.3.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "enp1s0";
-    isRegistry = true;
+    weedMaster = true;
+    weedFiler = true;
   };
 
   cb-weed = {
@@ -30,6 +21,18 @@
     serviceIp = "10.42.21.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
+    isRegistry = true;
+    weedMaster = true;
+  };
+
+  lw-gw = {
+    datacenter = "ams-lw";
+    hostId = "866330b1";
+    diskLayout = "ext4-vm";
+    routedSubnet = "10.42.22.0/24";
+    serviceIp = "10.42.22.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "enp1s0";
     isRegistry = true;
   };
 

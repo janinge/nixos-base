@@ -5,11 +5,19 @@ with lib;
 let
   cfg = config.services.seaweedfs;
   nodeCfg = nodes.${hostName};
-  
-  # Find master nodes (nodes with isRegistry = true)
-  masterNodes = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
+
+  masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
+  filerNodes = lib.filter (n: n ? "weedFiler" && n.weedFiler) (lib.attrValues nodes);
+
   masterAddresses = lib.map (n: "${n.serviceIp}:9333") masterNodes;
-  filerAddresses = lib.map (n: "${n.serviceIp}:8888") masterNodes;
+
+  allFilerAdresses = lib.map (n: "${n.serviceIp}:8888") filerNodes;
+
+  # If this node is a filer, put it first
+  orderedFilerAddresses = if (nodeCfg ? "weedFiler" && nodeCfg.weedFiler) then
+    [ "${nodeCfg.serviceIp}:8888" ] ++ (lib.remove "${nodeCfg.serviceIp}:8888" allFilerAdresses)
+  else
+    allFilerAdresses;
 
   # Use proper TOML format
   tomlFormat = pkgs.formats.toml {};
@@ -116,12 +124,6 @@ in
             example = "/mnt/seaweedfs";
           };
 
-          filerAddress = mkOption {
-            type = types.str;
-            default = "${nodeCfg.serviceIp}:${toString cfg.filer.port}";
-            description = "Filer address to connect to";
-          };
-
           allowOthers = mkOption {
             type = types.bool;
             default = true;
@@ -194,8 +196,8 @@ in
             -ip=${nodeCfg.serviceIp} \
             -port=${toString cfg.master.port} \
             -volumeSizeLimitMB=${toString cfg.master.volumeSizeLimitMB} \
-            ${optionalString (cfg.master.peers != []) 
-              "-peers=${concatStringsSep "," cfg.master.peers}"} \
+            ${optionalString (masterAddresses != [])
+              "-peers=${concatStringsSep "," masterAddresses}"} \
             -defaultReplication=001
         '';
         Restart = "on-failure";
@@ -246,6 +248,7 @@ in
             -port=${toString cfg.filer.port} \
             -master=${concatStringsSep "," masterAddresses} \
             -dataCenter=${cfg.volume.dataCenter} \
+            ${optionalString (cfg.volume.rack != null) "-rack=${cfg.volume.rack}"} \
             -defaultReplicaPlacement=001 \
             -dirListLimit=100000
         '';
@@ -270,7 +273,7 @@ in
         Group = "root";
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed mount \
-            -filer='${concatStringsSep "," filerAddresses}' \
+            -filer='${concatStringsSep "," orderedFilerAddresses}' \
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
             -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
