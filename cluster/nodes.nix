@@ -12,6 +12,18 @@
     weedFiler = true;
   };
 
+  aws-gw = {
+    datacenter = "sto-aw";
+    hostId = "9c2b4d1a";
+    diskLayout = "ext4-ebs";
+    routedSubnet = "10.42.20.0/24";
+    serviceIp = "10.42.20.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens5";
+    isRegistry = true;
+    weedMaster = true;
+  };
+
   cb-weed = {
     datacenter = "fra-cb";
     hostId = "1f4f0019";
