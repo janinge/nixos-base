@@ -10,7 +10,7 @@
 
   outputs = { self, nixpkgs, nixpkgs-unstable, disko, sops-nix, ... }:
   let
-    system = "x86_64-linux";
+    defaultSystem = "x86_64-linux";
     lib = nixpkgs.lib;
     nodes = import ./cluster/nodes.nix;
 
@@ -28,6 +28,7 @@
         (fileName: _: let
           hostName = lib.removeSuffix ".nix" fileName;
           nodeCfg = nodes.${hostName};
+          system = nodeCfg.system or defaultSystem;
         in {
           name = hostName;
           value = nixpkgs.lib.nixosSystem {

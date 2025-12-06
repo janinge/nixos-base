@@ -22,6 +22,9 @@
     publicIf = "ens5";
     isRegistry = true;
     weedMaster = true;
+
+    system = "aarch64-linux";
+    nixpkgs.hostPlatform = "aarch64-linux";
   };
 
   cb-weed = {
