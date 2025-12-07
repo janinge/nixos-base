@@ -16,6 +16,16 @@
           echo "Waiting for Tailscale to connect..."
           sleep 2
         done
+
+        # Wait for an IP address to be assigned
+        until ${pkgs.tailscale}/bin/tailscale ip -4 | grep -q '.'; do
+          echo "Waiting for Tailscale IP..."
+          sleep 2
+        done
+
+        # Stabilization delay to allow route propagation and peer handshakes
+        echo "Tailscale is ready-ish..."
+        sleep 4
       '';
     };
   };
