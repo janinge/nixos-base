@@ -5,6 +5,7 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/headscale.nix
+    ../modules/tailscale.nix
     ../modules/coredns.nix
     ../modules/nomad.nix
     ../modules/seaweedfs.nix

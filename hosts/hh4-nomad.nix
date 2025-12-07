@@ -6,6 +6,7 @@ in {
     ../modules/common.nix
     ../modules/power.nix
     ../modules/nomad.nix
+    ../modules/tailscale.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
     ../modules/seaweedfs.nix

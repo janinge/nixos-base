@@ -73,6 +73,17 @@ in
         "d /var/lib/nomad 0750 nomad nomad -"
       ];
 
+      # Ensure Nomad and Consul start after Tailscale is fully online (provided by tailscale.nix)
+      systemd.services.nomad = {
+        after = lib.optional config.services.tailscale.enable "tailscale-online.service";
+        wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
+      };
+
+      systemd.services.consul = {
+        after = lib.optional config.services.tailscale.enable "tailscale-online.service";
+        wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
+      };
+
       services.nomad = {
         enable = true;
         extraSettingsPaths = [ config.sops.templates."nomad-secrets.json".path ];
@@ -344,6 +355,7 @@ in
         podman
         podman-tui
         dive
+        jq
       ];
     })
   ];

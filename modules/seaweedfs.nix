@@ -34,6 +34,9 @@ let
 
   # Determine if any component is enabled
   isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
+
+  # Helper to manage tailscale dependency
+  tailscaleDependency = optional config.services.tailscale.enable "tailscale-online.service";
 in
 {
   options.services.seaweedfs = {
@@ -184,7 +187,8 @@ in
     systemd.services.seaweedfs-master = mkIf cfg.master.enable {
       description = "SeaweedFS Master Server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      after = [ "network.target" ] ++ tailscaleDependency;
+      wants = tailscaleDependency;
 
       serviceConfig = {
         Type = "simple";
@@ -209,7 +213,10 @@ in
     systemd.services.seaweedfs-volume = mkIf cfg.volume.enable {
       description = "SeaweedFS Volume Server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ] ++ optional cfg.master.enable "seaweedfs-master.service";
+      after = [ "network.target" ]
+        ++ optional cfg.master.enable "seaweedfs-master.service"
+        ++ tailscaleDependency;
+      wants = tailscaleDependency;
 
       serviceConfig = {
         Type = "simple";
@@ -235,7 +242,8 @@ in
     systemd.services.seaweedfs-filer = mkIf cfg.filer.enable {
       description = "SeaweedFS Filer Server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "seaweedfs-master.service" ];
+      after = [ "network.target" "seaweedfs-master.service" ] ++ tailscaleDependency;
+      wants = tailscaleDependency;
 
       serviceConfig = {
         Type = "simple";
@@ -261,7 +269,8 @@ in
     systemd.services.seaweedfs-mount = mkIf (cfg.mount != null) {
       description = "SeaweedFS FUSE Mount";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      after = [ "network.target" ] ++ tailscaleDependency;
+      wants = tailscaleDependency;
       requires = mkIf cfg.filer.enable [ "seaweedfs-filer.service" ];
 
       # Add fuse to the PATH
