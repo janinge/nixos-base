@@ -31,10 +31,8 @@ in {
     ];
   };
 
-  # Enable Nomad Server
   cluster.nomad.server.enable = true;
 
-  # SeaweedFS configuration
   services.seaweedfs = {
     master.enable = true;
     filer.enable = true;

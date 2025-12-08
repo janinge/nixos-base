@@ -20,7 +20,6 @@
     serviceIp = "10.42.20.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens5";
-    isRegistry = true;
     weedMaster = true;
 
     system = "aarch64-linux";
@@ -36,7 +35,6 @@
     serviceIp = "10.42.21.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
-    isRegistry = true;
     weedMaster = true;
   };
 
@@ -48,7 +46,6 @@
     serviceIp = "10.42.22.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
-    isRegistry = true;
   };
 
   hh4-nomad = {

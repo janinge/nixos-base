@@ -73,7 +73,7 @@ in
         "d /var/lib/nomad 0750 nomad nomad -"
       ];
 
-      # Ensure Nomad and Consul start after Tailscale is fully online (provided by tailscale.nix)
+      # Ensure Nomad and Consul start after Tailscale is fully online
       systemd.services.nomad = {
         after = lib.optional config.services.tailscale.enable "tailscale-online.service";
         wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
@@ -92,7 +92,7 @@ in
           data_dir = "/var/lib/nomad";
           bind_addr = nodeCfg.serviceIp;
           telemetry.publish_allocation_metrics = true;
-          datacenter = nodeCfg.datacenter;
+          datacenter = "earth";
           consul = {
             address = "127.0.0.1:8500";
             auto_advertise = true;
@@ -118,7 +118,7 @@ in
       };
     })
 
-    # Server Specific Configuration
+    # Server specific configuration
     (lib.mkIf cfg.server.enable {
       systemd.services.nomad.after = [ "consul.service" ];
 
@@ -243,7 +243,7 @@ in
       };
     })
 
-    # Client Specific Configuration
+    # Client specific configuration
     (lib.mkIf cfg.client.enable {
       services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 

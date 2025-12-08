@@ -5,7 +5,6 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/headscale.nix
-    ../modules/nomad.nix
     ../modules/seaweedfs.nix
   ];
 
@@ -44,8 +43,6 @@ in {
       "--advertise-routes=${cfg.routedSubnet}"
     ];
   };
-
-  cluster.nomad.server.enable = true;
 
   services.seaweedfs = {
     master.enable = true;

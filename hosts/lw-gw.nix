@@ -6,8 +6,6 @@ in {
     ../modules/common.nix
     ../modules/headscale.nix
     ../modules/coredns.nix
-    ../modules/nomad.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -29,8 +27,6 @@ in {
       "--advertise-routes=${cfg.routedSubnet}"
     ];
   };
-
-  cluster.nomad.server.enable = true;
 
   networking = {
     nat = {
