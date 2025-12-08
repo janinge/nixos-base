@@ -45,7 +45,7 @@
         })
         (lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n) hostFiles);
 
-    supportedSystems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
     forAllSystems = lib.genAttrs supportedSystems;
   in {
     nixosConfigurations = mkHostConfigs;
