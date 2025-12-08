@@ -12,9 +12,13 @@ in {
     ../modules/seaweedfs.nix
   ];
 
+  hardware.enableRedistributableFirmware = true;
+
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
+
+  networking.wireless.enable = true;
 
   networking.defaultGateway = "192.168.2.1";
 
@@ -41,7 +45,6 @@ in {
     ];
   };
 
-  # Enable Nomad Client
   cluster.nomad.client.enable = true;
 
   services.seaweedfs = {
