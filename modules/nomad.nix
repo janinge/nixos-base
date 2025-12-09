@@ -125,7 +125,7 @@ in
       services.nomad.settings = {
         server = {
           enabled = true;
-          bootstrap_expect = 1;
+          bootstrap_expect = serverCount;
         };
         advertise = {
           http = nodeCfg.serviceIp;
