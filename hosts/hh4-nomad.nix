@@ -12,13 +12,9 @@ in {
     ../modules/seaweedfs.nix
   ];
 
-  hardware.enableRedistributableFirmware = true;
-
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
-
-  networking.wireless.enable = true;
 
   networking.defaultGateway = "192.168.2.1";
 
@@ -35,7 +31,7 @@ in {
   ];
 
   services.resolved.enable = true;
-  services.resolved.fallbackDns = [ "45.90.28.186" "45.90.30.186" ];
+  services.resolved.fallbackDns = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
 
   services.tailscale = {
     enable = true;
