@@ -143,7 +143,7 @@ in
         client_addr = "127.0.0.1 ${nodeCfg.serviceIp}";
         server = true;
         bootstrap_expect = serverCount;
-        retry_join = consulJoin;
+        retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
         ui_config = {
           enabled = true;
         };
@@ -305,7 +305,7 @@ in
 
       services.consul.extraConfig = {
         server = false;
-        retry_join = consulJoin;
+        retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
         dns_config = { allow_stale = true; node_ttl = "15s"; };
         autopilot.cleanup_dead_servers = true;
       };
