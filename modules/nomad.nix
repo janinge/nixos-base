@@ -208,7 +208,9 @@ in
             endpoint.address = "127.0.0.1:8500";
             exposedByDefault = false;
             prefix = "traefik";
-            constraints = "Tag(`traefik.enable=true`)";
+            watch = true;
+            stale = true;
+            cache = true;
           };
           certificatesResolvers.letsencrypt.acme = {
             storage = "/var/lib/traefik/acme.json";
