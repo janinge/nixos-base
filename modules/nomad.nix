@@ -185,6 +185,20 @@ in
             dashboard = true;
             insecure = false;
           };
+          tls = {
+            options = {
+              default = {
+                minVersion = "VersionTLS13";
+                sniStrict = true;
+
+                curvePreferences = [
+                  "CurveP521"
+                  "CurveP384"
+                  "CurveP256"
+                ];
+              };
+            };
+          };
           entryPoints = {
             web.address = ":80";
             websecure.address = ":443";
@@ -192,8 +206,9 @@ in
           };
           providers.consulCatalog = {
             endpoint.address = "127.0.0.1:8500";
-            exposedByDefault = true;
+            exposedByDefault = false;
             prefix = "traefik";
+            constraints = "Tag(`traefik.enable=true`)";
           };
           certificatesResolvers.letsencrypt.acme = {
             storage = "/var/lib/traefik/acme.json";
@@ -236,6 +251,20 @@ in
                 loadBalancer = {
                   servers = [ { url = "http://127.0.0.1:8500"; } ];
                 };
+              };
+            };
+            middlewares.hsts = {
+              headers = {
+                stsSeconds = 63072000;
+                stsIncludeSubdomains = true;
+                stsPreload = true;
+
+                contentTypeNosniff = true;
+                browserXssFilter = true;
+                frameDeny = true;
+
+                referrerPolicy = "strict-origin-when-cross-origin";
+                permissionsPolicy = "camera=(), microphone=(), geolocation=()";
               };
             };
           };
