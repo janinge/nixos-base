@@ -5,6 +5,7 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/headscale.nix
+    ../modules/nomad.nix
     ../modules/seaweedfs.nix
   ];
 
@@ -44,9 +45,21 @@ in {
     ];
   };
 
+  cluster.nomad.client.enable = true;
+
   services.seaweedfs = {
     master.enable = true;
-    volume.enable = true;
+
+    volume = {
+      enable = true;
+      dataDir = "/var/lib/seaweedfs/volumes";
+    };
+
+    mount = {
+      mountPoint = "/mnt/seaweedfs";
+      cacheSizeMB = 2000;
+      allowOthers = true;
+    };
   };
 
   networking = {
