@@ -4,7 +4,6 @@ let
 in {
   imports = [
     ../modules/common.nix
-    ../modules/headscale.nix
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
   ];
@@ -53,6 +52,7 @@ in {
     volume = {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";
+      rack = "qemu1";
     };
 
     mount = {
