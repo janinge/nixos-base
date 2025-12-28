@@ -28,8 +28,12 @@ in {
 
   services.seaweedfs = {
     master.enable = true;
-    volume.enable = true;
-    volume.dataDir = "/var/lib/seaweedfs/volumes";
+
+    volume = {
+      enable = true;
+      dataDir = "/var/lib/seaweedfs/volumes";
+      rack = "sc1";
+    };
   };
 
   fileSystems."/var/lib/seaweedfs/volumes" = {
