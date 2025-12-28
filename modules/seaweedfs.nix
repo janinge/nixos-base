@@ -51,7 +51,7 @@ in
 
       volumeSizeLimitMB = mkOption {
         type = types.int;
-        default = 30000;
+        default = 40000;
         description = "Default volume size limit in MB";
       };
 

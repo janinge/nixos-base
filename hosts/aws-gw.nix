@@ -33,6 +33,7 @@ in {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";
       rack = "sc1";
+      maxVolumes = 6;
     };
   };
 

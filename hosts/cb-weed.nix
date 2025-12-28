@@ -53,6 +53,7 @@ in {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";
       rack = "qemu1";
+      maxVolumes = 15;
     };
 
     mount = {
