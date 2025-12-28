@@ -4,7 +4,6 @@ let
 in {
   imports = [
     ../modules/common.nix
-    ../modules/headscale.nix
     ../modules/seaweedfs.nix
   ];
 
@@ -30,6 +29,13 @@ in {
   services.seaweedfs = {
     master.enable = true;
     volume.enable = true;
+    volume.dataDir = "/var/lib/seaweedfs/volumes";
+  };
+
+  fileSystems."/var/lib/seaweedfs/volumes" = {
+    device = "/dev/nvme1n1";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
   };
 
   networking = {
