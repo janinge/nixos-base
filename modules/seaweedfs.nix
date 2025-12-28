@@ -116,6 +116,12 @@ in
         default = "/var/lib/seaweedfs/filer/leveldb2";
         description = "Directory for LevelDB database";
       };
+
+      defaultReplicaPlacement = mkOption {
+        type = types.str;
+        default = "100";
+        description = "Default replication placement for filer metadata";
+      };
     };
 
     mount = mkOption {
@@ -201,8 +207,7 @@ in
             -port=${toString cfg.master.port} \
             -volumeSizeLimitMB=${toString cfg.master.volumeSizeLimitMB} \
             ${optionalString (masterAddresses != [])
-              "-peers=${concatStringsSep "," masterAddresses}"} \
-            -defaultReplication=001
+              "-peers=${concatStringsSep "," masterAddresses}"}
         '';
         Restart = "on-failure";
         RestartSec = "10s";
@@ -257,7 +262,7 @@ in
             -master=${concatStringsSep "," masterAddresses} \
             -dataCenter=${cfg.volume.dataCenter} \
             ${optionalString (cfg.volume.rack != null) "-rack=${cfg.volume.rack}"} \
-            -defaultReplicaPlacement=001 \
+            -defaultReplicaPlacement=${cfg.filer.defaultReplicaPlacement} \
             -dirListLimit=100000
         '';
         Restart = "on-failure";
