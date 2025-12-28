@@ -48,7 +48,7 @@ in {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";
       rack = "nvme1";
-      maxVolumes = 30;
+      maxVolumes = 40;
     };
 
     mount = {
