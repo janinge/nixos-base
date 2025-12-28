@@ -4,8 +4,6 @@ let
 in {
   imports = [
     ../modules/common.nix
-    ../modules/headscale.nix
-    ../modules/coredns.nix
   ];
 
   networking.hostName = hostName;
