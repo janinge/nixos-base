@@ -9,6 +9,7 @@ in {
     ../modules/coredns.nix
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
+    ../modules/patroni.nix
   ];
 
   networking.hostName = hostName;
@@ -36,6 +37,11 @@ in {
   services.seaweedfs = {
     master.enable = true;
     filer.enable = true;
+  };
+
+  services.patroni = {
+    enable = true;
+    scope = "postgres-cluster";
   };
 
   services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {

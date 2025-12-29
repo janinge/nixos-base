@@ -10,6 +10,7 @@
     isRegistry = true;
     weedMaster = true;
     weedFiler = true;
+    patroni = true;
   };
 
   aws-gw = {
@@ -36,6 +37,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     weedMaster = true;
+    patroni = true;
   };
 
   lw-gw = {

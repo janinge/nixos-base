@@ -6,6 +6,7 @@ in {
     ../modules/common.nix
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
+    ../modules/patroni.nix
   ];
 
   networking.hostName = hostName;
@@ -61,6 +62,11 @@ in {
       cacheSizeMB = 2000;
       allowOthers = true;
     };
+  };
+
+  services.patroni = {
+    enable = true;
+    scope = "postgres-cluster";
   };
 
   networking = {
