@@ -46,6 +46,7 @@ in {
   };
 
   cluster.nomad.client.enable = true;
+  cluster.patroni.enable = true;
 
   services.seaweedfs = {
     master.enable = true;
@@ -62,11 +63,6 @@ in {
       cacheSizeMB = 2000;
       allowOthers = true;
     };
-  };
-
-  services.patroni = {
-    enable = true;
-    scope = "postgres-cluster";
   };
 
   networking = {

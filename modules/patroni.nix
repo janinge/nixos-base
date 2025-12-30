@@ -3,125 +3,15 @@
 with lib;
 
 let
-  cfg = config.services.patroni;
+  cfg = config.cluster.patroni;
   nodeCfg = nodes.${hostName};
 
-  # Find all nodes with Patroni enabled
+  # Find all nodes with Patroni enabled for the cluster
   patroniNodes = lib.filter (n: n ? "patroni" && n.patroni) (lib.attrValues nodes);
-
-  patroniConfig = {
-    scope = cfg.scope;
-    namespace = "/service/";
-    name = hostName;
-
-    restapi = {
-      listen = "${nodeCfg.serviceIp}:8008";
-      connect_address = "${nodeCfg.serviceIp}:8008";
-    };
-
-    consul = {
-      host = "127.0.0.1:8500";
-      register_service = true;
-    };
-
-    bootstrap = {
-      dcs = {
-        ttl = 30;
-        loop_wait = 10;
-        retry_timeout = 10;
-        maximum_lag_on_failover = 1048576;
-        postgresql = {
-          use_pg_rewind = true;
-          parameters = {
-            max_connections = 200;
-            shared_buffers = "256MB";
-            effective_cache_size = "1GB";
-            maintenance_work_mem = "64MB";
-            checkpoint_completion_target = 0.9;
-            wal_buffers = "16MB";
-            default_statistics_target = 100;
-            random_page_cost = 1.1;
-            effective_io_concurrency = 200;
-            work_mem = "1310kB";
-            min_wal_size = "1GB";
-            max_wal_size = "4GB";
-            max_worker_processes = 4;
-            max_parallel_workers_per_gather = 2;
-            max_parallel_workers = 4;
-            max_parallel_maintenance_workers = 2;
-          };
-        };
-      };
-
-      initdb = [
-        { encoding = "UTF8"; }
-        { data-checksums = true; }
-      ];
-
-      pg_hba = [
-        "local all all peer"
-        "host replication replicator 0.0.0.0/0 md5"
-        "host all all 0.0.0.0/0 md5"
-      ];
-
-      users = {
-        admin = {
-          password = "admin";
-          options = [ "CREATEDB" "CREATEROLE" ];
-        };
-        replicator = {
-          password = "__REPLICATION_PASSWORD__";
-          options = [ "REPLICATION" ];
-        };
-      };
-    };
-
-    postgresql = {
-      listen = "${nodeCfg.serviceIp}:5432";
-      connect_address = "${nodeCfg.serviceIp}:5432";
-      data_dir = cfg.dataDir;
-      bin_dir = "${pkgs.postgresql_17}/bin";
-      pgpass = "/var/lib/patroni/.pgpass";
-      authentication = {
-        replication = {
-          username = "replicator";
-          password = "__REPLICATION_PASSWORD__";
-        };
-        superuser = {
-          username = "postgres";
-          password = "__SUPERUSER_PASSWORD__";
-        };
-      };
-      parameters = {
-        unix_socket_directories = "/run/postgresql";
-        logging_collector = "on";
-        log_directory = "/var/log/postgresql";
-        log_filename = "postgresql-%Y-%m-%d.log";
-        log_rotation_age = "1d";
-        log_rotation_size = "100MB";
-      };
-      create_replica_methods = [ "basebackup" ];
-      basebackup = [
-        { checkpoint = "fast"; }
-      ];
-    };
-
-    tags = {
-      nofailover = false;
-      noloadbalance = false;
-      clonefrom = false;
-      nosync = false;
-    };
-  };
-
-  # Base config with placeholders
-  patroniConfigTemplate = pkgs.writeText "patroni-template.yml" (builtins.toJSON patroniConfig);
-
-  # Helper to manage dependencies
-  tailscaleDependency = optional config.services.tailscale.enable "tailscale-online.service";
+  patroniNodeIps = map (n: n.serviceIp) patroniNodes;
 in
 {
-  options.services.patroni = {
+  options.cluster.patroni = {
     enable = mkEnableOption "Patroni PostgreSQL";
 
     scope = mkOption {
@@ -130,15 +20,15 @@ in
       description = "Name of the Patroni cluster";
     };
 
-    dataDir = mkOption {
-      type = types.str;
-      default = "/var/lib/postgresql/17/data";
-      description = "PostgreSQL data directory";
+    postgresqlVersion = mkOption {
+      type = types.int;
+      default = 17;
+      description = "PostgreSQL major version";
     };
   };
 
   config = mkIf cfg.enable {
-    # Require sops secrets for Patroni
+    # Configure sops secrets
     sops.secrets.postgres_superuser_password = {
       owner = "postgres";
       group = "postgres";
@@ -153,79 +43,188 @@ in
       restartUnits = [ "patroni.service" ];
     };
 
-    users.groups.postgres = {};
-    users.users.postgres = {
-      isSystemUser = true;
-      group = "postgres";
-      home = "/var/lib/postgresql";
-      description = "PostgreSQL database user";
-    };
+    services.patroni = {
+      enable = true;
+      name = hostName;
+      scope = cfg.scope;
+      nodeIp = nodeCfg.serviceIp;
+      otherNodesIps = patroniNodeIps;
 
-    # Create necessary directories
-    systemd.tmpfiles.rules = [
-      "d /var/lib/postgresql 0750 postgres postgres -"
-      "d /var/lib/postgresql/17 0750 postgres postgres -"
-      "d ${cfg.dataDir} 0750 postgres postgres -"
-      "d /var/lib/patroni 0750 postgres postgres -"
-      "d /var/log/postgresql 0750 postgres postgres -"
-      "d /run/postgresql 0755 postgres postgres -"
-    ];
+      postgresqlPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
+      postgresqlPort = 5432;
+      postgresqlDataDir = "/var/lib/postgresql/${toString cfg.postgresqlVersion}/data";
 
-    # Patroni service
-    systemd.services.patroni = {
-      description = "Patroni PostgreSQL";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "consul.service" ] ++ tailscaleDependency;
-      wants = tailscaleDependency;
-      requires = [ "consul.service" ];
+      # Use settings attribute for all custom configuration
+      settings = {
+        # Consul DCS configuration
+        consul = {
+          host = "127.0.0.1:8500";
+          register_service = true;
+        };
 
-      # Substitute secrets into config at runtime
-      script = ''
-        SUPERUSER_PASSWORD=$(cat ${config.sops.secrets.postgres_superuser_password.path})
-        REPLICATION_PASSWORD=$(cat ${config.sops.secrets.postgres_replication_password.path})
+        # REST API
+        restapi = {
+          listen = "${nodeCfg.serviceIp}:8008";
+          connect_address = "${nodeCfg.serviceIp}:8008";
+        };
 
-        sed -e "s|__SUPERUSER_PASSWORD__|$SUPERUSER_PASSWORD|g" \
-            -e "s|__REPLICATION_PASSWORD__|$REPLICATION_PASSWORD|g" \
-            ${patroniConfigTemplate} > /run/patroni/patroni.yml
+        # Bootstrap configuration
+        bootstrap = {
+          dcs = {
+            ttl = 30;
+            loop_wait = 10;
+            retry_timeout = 10;
+            maximum_lag_on_failover = 1048576;
 
-        exec ${pkgs.patroni}/bin/patroni /run/patroni/patroni.yml
-      '';
+            postgresql = {
+              use_pg_rewind = true;
+              use_slots = true;
 
-      preStart = ''
-        mkdir -p /run/patroni
-        chown postgres:postgres /run/patroni
-        chmod 0750 /run/patroni
-      '';
+              parameters = {
+                # Connection settings
+                max_connections = 64;
+                superuser_reserved_connections = 4;
 
-      serviceConfig = {
-        Type = "simple";
-        User = "postgres";
-        Group = "postgres";
-        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
-        KillMode = "mixed";
-        KillSignal = "SIGINT";
-        TimeoutSec = 0;
-        Restart = "on-failure";
-        RestartSec = "10s";
+                # Memory settings
+                shared_buffers = "2GB";
+                effective_cache_size = "6GB";
+                maintenance_work_mem = "1GB";
+                work_mem = "20MB";
 
-        NoNewPrivileges = true;
-        PrivateTmp = true;
-        ProtectSystem = "strict";
-        ProtectHome = true;
-        ReadWritePaths = [
-          "/var/lib/postgresql"
-          "/var/lib/patroni"
-          "/var/log/postgresql"
-          "/run/postgresql"
-          "/run/patroni"
-        ];
+                # WAL settings
+                wal_buffers = "16MB";
+                min_wal_size = "1GB";
+                max_wal_size = "4GB";
+                wal_level = "replica";
+
+                # Checkpointing
+                checkpoint_completion_target = 0.9;
+                checkpoint_timeout = "15min";
+
+                # Query planner
+                default_statistics_target = 100;
+                random_page_cost = 1.1;
+                effective_io_concurrency = 200;
+
+                # Parallel queries
+                max_worker_processes = 4;
+                max_parallel_workers_per_gather = 2;
+                max_parallel_workers = 4;
+                max_parallel_maintenance_workers = 2;
+
+                # Replication settings
+                hot_standby = "on";
+                wal_log_hints = "on";
+                max_wal_senders = 10;
+                max_replication_slots = 10;
+              };
+            };
+          };
+
+          # Initialize database
+          initdb = [
+            { encoding = "UTF8"; }
+            { locale = "en_US.UTF-8"; }
+            { data-checksums = true; }
+          ];
+
+          # Host-based authentication
+          pg_hba = [
+            "local all all peer"
+            "host all all 127.0.0.1/32 scram-sha-256"
+            "host all all ::1/128 scram-sha-256"
+            "host replication replicator 10.42.0.0/16 scram-sha-256"
+            "host all all 10.42.0.0/16 scram-sha-256"
+          ];
+        };
+
+        # PostgreSQL configuration
+        postgresql = {
+          listen = "${nodeCfg.serviceIp}:5432";
+          connect_address = "${nodeCfg.serviceIp}:5432";
+
+          authentication = {
+            replication = {
+              username = "replicator";
+            };
+            superuser = {
+              username = "postgres";
+            };
+            rewind = {
+              username = "rewind";
+            };
+          };
+
+          parameters = {
+            unix_socket_directories = "/run/postgresql";
+
+            # Logging
+            logging_collector = "on";
+            log_directory = "/var/log/postgresql";
+            log_filename = "postgresql-%Y-%m-%d_%H%M%S.log";
+            log_rotation_age = "1d";
+            log_rotation_size = "100MB";
+            log_line_prefix = "%m [%p] %u@%d ";
+            log_timezone = "UTC";
+          };
+
+          # Replica creation method
+          create_replica_methods = [ "basebackup" ];
+          basebackup = [
+            { checkpoint = "fast"; }
+            { max-rate = "100M"; }
+          ];
+        };
+
+        # Tags for this node
+        tags = {
+          nofailover = false;
+          noloadbalance = false;
+          clonefrom = false;
+          nosync = false;
+        };
+
+        # Watchdog for automatic fencing (optional)
+        # watchdog = {
+        #   mode = "automatic";
+        #   device = "/dev/watchdog";
+        #   safety_margin = 5;
+        # };
       };
     };
 
-    # Install PostgreSQL and Patroni
-    environment.systemPackages = [
-      pkgs.postgresql_17
-      pkgs.patroni
+    # Override the systemd service to inject secrets via environment
+    systemd.services.patroni = {
+      after = [ "consul.service" ] ++
+              (lib.optional config.services.tailscale.enable "tailscale-online.service");
+      wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
+      requires = [ "consul.service" ];
+
+      environment = {
+        PATRONI_SUPERUSER_PASSWORD = "%POSTGRES_SUPERUSER_PASSWORD%";
+        PATRONI_REPLICATION_PASSWORD = "%POSTGRES_REPLICATION_PASSWORD%";
+        PATRONI_REWIND_PASSWORD = "%POSTGRES_REPLICATION_PASSWORD%";
+      };
+
+      serviceConfig = {
+        # Load secrets from sops files
+        LoadCredential = [
+          "superuser:${config.sops.secrets.postgres_superuser_password.path}"
+          "replication:${config.sops.secrets.postgres_replication_password.path}"
+        ];
+      };
+
+      # Prestart script to set environment variables from credentials
+      preStart = lib.mkBefore ''
+        export PATRONI_SUPERUSER_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/superuser)
+        export PATRONI_REPLICATION_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/replication)
+        export PATRONI_REWIND_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/replication)
+      '';
+    };
+
+    # Ensure PostgreSQL logs directory exists
+    systemd.tmpfiles.rules = [
+      "d /var/log/postgresql 0750 postgres postgres -"
     ];
   };
 }

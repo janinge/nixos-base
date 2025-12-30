@@ -33,15 +33,11 @@ in {
   };
 
   cluster.nomad.server.enable = true;
+  cluster.patroni.enable = true;
 
   services.seaweedfs = {
     master.enable = true;
     filer.enable = true;
-  };
-
-  services.patroni = {
-    enable = true;
-    scope = "postgres-cluster";
   };
 
   services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {
