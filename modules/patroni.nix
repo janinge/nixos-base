@@ -28,7 +28,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Configure sops secrets without owner - systemd will handle access
+    # Configure sops secrets
     sops.secrets.postgres_superuser_password = {
       sopsFile = ../secrets/secrets.yaml;
     };
@@ -59,9 +59,6 @@ in
       postgresqlPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
       postgresqlPort = 5432;
       postgresqlDataDir = "/var/lib/postgresql/${toString cfg.postgresqlVersion}/data";
-
-      # Use environmentFiles to inject secrets
-      environmentFiles = [ config.sops.templates."patroni-env".path ];
 
       settings = {
         # Consul DCS configuration
@@ -201,12 +198,17 @@ in
       };
     };
 
-    # Add Consul dependency
+    # Override systemd service to inject environment file
     systemd.services.patroni = {
       after = [ "consul.service" ] ++
               (lib.optional config.services.tailscale.enable "tailscale-online.service");
       wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
       requires = [ "consul.service" ];
+
+      # Add environment file via serviceConfig
+      serviceConfig = {
+        EnvironmentFile = config.sops.templates."patroni-env".path;
+      };
     };
 
     # Ensure PostgreSQL logs directory exists
