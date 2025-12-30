@@ -216,12 +216,17 @@ in
         # Systemd must create this directory with the correct permissions.
         RuntimeDirectory = "postgresql";
         RuntimeDirectoryMode = "0755";
+
+        User = "postgres";
+        Group = "postgres";
       };
     };
 
     # Ensure PostgreSQL logs directory exists
     systemd.tmpfiles.rules = [
       "d /var/log/postgresql 0750 postgres postgres -"
+      # Patroni defaults pgpass location here, ensure it exists and is writable by postgres
+      "d /var/lib/patroni 0750 postgres postgres -"
     ];
   };
 }
