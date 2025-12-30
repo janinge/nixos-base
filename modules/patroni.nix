@@ -212,6 +212,10 @@ in
       # Add environment file via serviceConfig
       serviceConfig = {
         EnvironmentFile = config.sops.templates."patroni-env".path;
+        # Patroni is configured to use /run/postgresql for unix sockets.
+        # Systemd must create this directory with the correct permissions.
+        RuntimeDirectory = "postgresql";
+        RuntimeDirectoryMode = "0755";
       };
     };
 
