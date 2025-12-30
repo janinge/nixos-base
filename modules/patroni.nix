@@ -228,6 +228,11 @@ in
         RuntimeDirectory = "postgresql";
         RuntimeDirectoryMode = "0755";
 
+        # Ensure Patroni state directory exists (specifically for .pgpass)
+        # This will be created as /var/lib/patroni, owned by postgres
+        StateDirectory = "patroni";
+        StateDirectoryMode = "0750";
+
         # Explicitly force run as postgres user to override upstream default (patroni)
         User = mkForce "postgres";
         Group = mkForce "postgres";
@@ -237,8 +242,6 @@ in
     # Ensure directories exist with correct permissions
     systemd.tmpfiles.rules = [
       "d /var/log/postgresql 0750 postgres postgres -"
-      # Patroni defaults pgpass location here, ensure it exists and is writable by postgres
-      "d /var/lib/patroni 0750 postgres postgres -"
     ];
   };
 }
