@@ -217,12 +217,13 @@ in
         RuntimeDirectory = "postgresql";
         RuntimeDirectoryMode = "0755";
 
-        User = "postgres";
-        Group = "postgres";
+        # Explicitly force run as postgres user to override upstream default (patroni)
+        User = mkForce "postgres";
+        Group = mkForce "postgres";
       };
     };
 
-    # Ensure PostgreSQL logs directory exists
+    # Ensure directories exist with correct permissions
     systemd.tmpfiles.rules = [
       "d /var/log/postgresql 0750 postgres postgres -"
       # Patroni defaults pgpass location here, ensure it exists and is writable by postgres
