@@ -50,6 +50,17 @@ in
       mode = "0400";
     };
 
+    users.groups.postgres = {};
+
+    users.users.postgres = {
+      description = "PostgreSQL User";
+      group = "postgres";
+      isSystemUser = true;
+      home = "/var/lib/postgresql";
+      createHome = true;
+      useDefaultShell = true;
+    };
+
     services.patroni = {
       enable = true;
       name = hostName;
