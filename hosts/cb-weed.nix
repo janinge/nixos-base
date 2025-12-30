@@ -45,7 +45,22 @@ in {
     ];
   };
 
-  cluster.nomad.client.enable = true;
+  cluster.nomad.client = {
+    enable = true;
+    hostVolumes = {
+      "local-stalwart" = {
+        path = "/var/lib/nomad-volumes/stalwart";
+        readOnly = false;
+        createDir = true;
+      };
+      "seaweedfs" = {
+        path = "/mnt/seaweedfs";
+        readOnly = false;
+        createDir = false;
+      };
+    };
+  };
+
   cluster.patroni.enable = true;
 
   services.seaweedfs = {

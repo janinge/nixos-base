@@ -24,6 +24,33 @@ in
     };
     client = {
       enable = lib.mkEnableOption "Nomad Client Role";
+
+      hostVolumes = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            path = lib.mkOption {
+              type = lib.types.str;
+              description = "Path on the host system";
+            };
+            readOnly = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Mount volume as read-only";
+            };
+            createDir = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Automatically create the directory if it doesn't exist";
+            };
+          };
+        });
+        default = {};
+        description = "Nomad host volumes configuration";
+        example = {
+          "local-data" = { path = "/var/lib/nomad-vols/data"; };
+          "shared-fs" = { path = "/mnt/seaweedfs"; createDir = false; };
+        };
+      };
     };
   };
 
@@ -75,8 +102,13 @@ in
 
       # Ensure Nomad and Consul start after Tailscale is fully online
       systemd.services.nomad = {
-        after = lib.optional config.services.tailscale.enable "tailscale-online.service";
+        after = lib.optional config.services.tailscale.enable "tailscale-online.service"
+          # Wait for SeaweedFS mount if it is enabled on this host
+          ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
+
         wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
+
+        requires = lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
       };
 
       systemd.services.consul = {
@@ -278,6 +310,12 @@ in
     (lib.mkIf cfg.client.enable {
       services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 
+      # Create directories for host volumes that request it
+      # Owned by nomad:nomad because Nomad runs as user 'nomad'
+      systemd.tmpfiles.rules = lib.mapAttrsToList (name: vol:
+        "d ${vol.path} 0755 nomad nomad -"
+      ) (lib.filterAttrs (n: v: v.createDir) cfg.client.hostVolumes);
+
       services.nomad.settings = {
         plugin."nomad-driver-podman" = {
           config = { };
@@ -290,7 +328,12 @@ in
             "driver.denylist" = "docker";
           };
 
-          # Define a specific host network for services to bind to
+          # Map configured host volumes to Nomad settings
+          host_volume = lib.mapAttrs (name: vol: {
+            path = vol.path;
+            read_only = vol.readOnly;
+          }) cfg.client.hostVolumes;
+
           host_network = {
             service = {
               cidr = "${nodeCfg.serviceIp}/32";
