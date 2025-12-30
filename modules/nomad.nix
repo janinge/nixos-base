@@ -158,6 +158,7 @@ in
         server = {
           enabled = true;
           bootstrap_expect = serverCount;
+          raft_multiplier = 5;
         };
         advertise = {
           http = nodeCfg.serviceIp;
@@ -178,6 +179,9 @@ in
         retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
         ui_config = {
           enabled = true;
+        };
+        performance = {
+          raft_multiplier = 5;
         };
       };
 

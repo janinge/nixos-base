@@ -21,7 +21,6 @@
     serviceIp = "10.42.20.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens5";
-    weedMaster = true;
 
     system = "aarch64-linux";
     nixpkgs.hostPlatform = "aarch64-linux";
@@ -36,6 +35,7 @@
     serviceIp = "10.42.21.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
+    isRegistry = true;
     weedMaster = true;
     patroni = true;
   };
@@ -58,5 +58,8 @@
     serviceIp = "10.42.11.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    isRegistry = true;
+    weedMaster = true;
+    patroni = true;
   };
 }

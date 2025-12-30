@@ -41,6 +41,8 @@ in {
     ];
   };
 
+  cluster.nomad.server.enable = true;
+
   cluster.nomad.client = {
     enable = true;
     hostVolumes = {
@@ -58,6 +60,8 @@ in {
   };
 
   services.seaweedfs = {
+    master.enable = true;
+
     volume = {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";

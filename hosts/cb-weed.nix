@@ -45,6 +45,8 @@ in {
     ];
   };
 
+  cluster.nomad.server.enable = true;
+
   cluster.nomad.client = {
     enable = true;
     hostVolumes = {
