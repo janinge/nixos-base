@@ -6,6 +6,9 @@ let
   cfg = config.cluster.patroni;
   nodeCfg = nodes.${hostName};
 
+  # Select PostgreSQL package based on version
+  pgPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
+
   # Find all nodes with Patroni enabled for the cluster
   patroniNodes = lib.filter (n: n ? "patroni" && n.patroni) (lib.attrValues nodes);
   patroniNodeIps = map (n: n.serviceIp) patroniNodes;
@@ -44,8 +47,6 @@ in
         PATRONI_REPLICATION_PASSWORD=${config.sops.placeholder.postgres_replication_password}
         PATRONI_REWIND_PASSWORD=${config.sops.placeholder.postgres_replication_password}
       '';
-      owner = "postgres";
-      group = "postgres";
       mode = "0400";
     };
 
@@ -56,7 +57,7 @@ in
       nodeIp = nodeCfg.serviceIp;
       otherNodesIps = patroniNodeIps;
 
-      postgresqlPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
+      postgresqlPackage = pgPackage;
       postgresqlPort = 5432;
       postgresqlDataDir = "/var/lib/postgresql/${toString cfg.postgresqlVersion}/data";
 
@@ -147,6 +148,9 @@ in
         postgresql = {
           listen = "${nodeCfg.serviceIp}:5432";
           connect_address = "${nodeCfg.serviceIp}:5432";
+
+          # Explicitly set bin_dir to ensure Patroni finds the correct binaries
+          bin_dir = "${pgPackage}/bin";
 
           authentication = {
             replication = {
