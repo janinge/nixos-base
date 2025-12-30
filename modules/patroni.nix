@@ -12,6 +12,19 @@ let
   # Find all nodes with Patroni enabled for the cluster
   patroniNodes = lib.filter (n: n ? "patroni" && n.patroni) (lib.attrValues nodes);
   patroniNodeIps = map (n: n.serviceIp) patroniNodes;
+
+  # Common Host-based authentication configuration
+  pgHbaSettings = [
+    "local all all peer"
+    "host all all 127.0.0.1/32 scram-sha-256"
+    "host all all ::1/128 scram-sha-256"
+    # Internal cluster network
+    "host replication replicator 10.42.0.0/16 scram-sha-256"
+    "host all all 10.42.0.0/16 scram-sha-256"
+    # Tailnet
+    "host replication replicator 100.64.0.0/10 scram-sha-256"
+    "host all all 100.64.0.0/10 scram-sha-256"
+  ];
 in
 {
   options.cluster.patroni = {
@@ -145,14 +158,8 @@ in
             "data-checksums"
           ];
 
-          # Host-based authentication
-          pg_hba = [
-            "local all all peer"
-            "host all all 127.0.0.1/32 scram-sha-256"
-            "host all all ::1/128 scram-sha-256"
-            "host replication replicator 10.42.0.0/16 scram-sha-256"
-            "host all all 10.42.0.0/16 scram-sha-256"
-          ];
+          # Host-based authentication (only used during bootstrap if not overridden in postgresql section)
+          pg_hba = pgHbaSettings;
         };
 
         # PostgreSQL configuration
@@ -162,6 +169,9 @@ in
 
           # Explicitly set bin_dir to ensure Patroni finds the correct binaries
           bin_dir = "${pgPackage}/bin";
+
+          # Enforce PG HBA settings on running clusters
+          pg_hba = pgHbaSettings;
 
           authentication = {
             replication = {
