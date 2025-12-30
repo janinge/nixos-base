@@ -28,19 +28,25 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Configure sops secrets
+    # Configure sops secrets without owner - systemd will handle access
     sops.secrets.postgres_superuser_password = {
-      owner = "postgres";
-      group = "postgres";
-      mode = "0400";
-      restartUnits = [ "patroni.service" ];
+      sopsFile = ../secrets/secrets.yaml;
     };
 
     sops.secrets.postgres_replication_password = {
+      sopsFile = ../secrets/secrets.yaml;
+    };
+
+    # Create environment file from secrets
+    sops.templates."patroni-env" = {
+      content = ''
+        PATRONI_SUPERUSER_PASSWORD=${config.sops.placeholder.postgres_superuser_password}
+        PATRONI_REPLICATION_PASSWORD=${config.sops.placeholder.postgres_replication_password}
+        PATRONI_REWIND_PASSWORD=${config.sops.placeholder.postgres_replication_password}
+      '';
       owner = "postgres";
       group = "postgres";
       mode = "0400";
-      restartUnits = [ "patroni.service" ];
     };
 
     services.patroni = {
@@ -54,7 +60,9 @@ in
       postgresqlPort = 5432;
       postgresqlDataDir = "/var/lib/postgresql/${toString cfg.postgresqlVersion}/data";
 
-      # Use settings attribute for all custom configuration
+      # Use environmentFiles to inject secrets
+      environmentFiles = [ config.sops.templates."patroni-env".path ];
+
       settings = {
         # Consul DCS configuration
         consul = {
@@ -193,33 +201,12 @@ in
       };
     };
 
-    # Override the systemd service to inject secrets via environment
+    # Add Consul dependency
     systemd.services.patroni = {
       after = [ "consul.service" ] ++
               (lib.optional config.services.tailscale.enable "tailscale-online.service");
       wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
       requires = [ "consul.service" ];
-
-      environment = {
-        PATRONI_SUPERUSER_PASSWORD = "%POSTGRES_SUPERUSER_PASSWORD%";
-        PATRONI_REPLICATION_PASSWORD = "%POSTGRES_REPLICATION_PASSWORD%";
-        PATRONI_REWIND_PASSWORD = "%POSTGRES_REPLICATION_PASSWORD%";
-      };
-
-      serviceConfig = {
-        # Load secrets from sops files
-        LoadCredential = [
-          "superuser:${config.sops.secrets.postgres_superuser_password.path}"
-          "replication:${config.sops.secrets.postgres_replication_password.path}"
-        ];
-      };
-
-      # Prestart script to set environment variables from credentials
-      preStart = lib.mkBefore ''
-        export PATRONI_SUPERUSER_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/superuser)
-        export PATRONI_REPLICATION_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/replication)
-        export PATRONI_REWIND_PASSWORD=$(cat $CREDENTIALS_DIRECTORY/replication)
-      '';
     };
 
     # Ensure PostgreSQL logs directory exists
