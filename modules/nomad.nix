@@ -165,7 +165,6 @@ in
           rpc = nodeCfg.serviceIp;
           serf = nodeCfg.serviceIp;
         };
-        client.enabled = false;
         consul = {
           server_service_name = "nomad";
           server_auto_join = true;
@@ -352,8 +351,6 @@ in
           serf = nodeCfg.serviceIp;
         };
 
-        server.enabled = false;
-
         consul = {
           client_auto_join = true;
         };
@@ -382,7 +379,6 @@ in
       };
 
       services.consul.extraConfig = {
-        server = false;
         retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
         dns_config = { allow_stale = true; node_ttl = "15s"; };
         autopilot.cleanup_dead_servers = true;
