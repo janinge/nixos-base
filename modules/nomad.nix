@@ -1,4 +1,4 @@
-{ config, pkgs, lib, nodes, hostName, ... }:
+{ config, pkgs, lib, nodes, hostName, pkgs-unstable, ... }:
 let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
@@ -311,7 +311,7 @@ in
 
     # Client specific configuration
     (lib.mkIf cfg.client.enable {
-      services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
+      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
 
       # Create directories for host volumes that request it
       # Owned by nomad:nomad because Nomad runs as user 'nomad'
@@ -424,7 +424,7 @@ in
       };
 
       environment.systemPackages = with pkgs; [
-        nomad-driver-podman
+        pkgs-unstable.nomad-driver-podman
         passt
         cni-plugins
         podman
