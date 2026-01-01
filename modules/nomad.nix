@@ -387,7 +387,7 @@ in
       virtualisation.podman = {
         enable = true;
         dockerCompat = false;
-        defaultNetwork.settings.dns_enabled = false;
+        defaultNetwork.settings.dns_enabled = true;
       };
 
       virtualisation.docker.enable = lib.mkForce false;
@@ -425,6 +425,7 @@ in
 
       environment.systemPackages = with pkgs; [
         nomad-driver-podman
+        passt
         cni-plugins
         podman
         podman-tui
