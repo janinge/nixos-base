@@ -1,6 +1,16 @@
 { lib, nodes, hostName, ... }:
 let
   cfg = nodes.${hostName};
+
+  # Filter nodes for registry role
+  registryNodes = lib.filter (n: n.isRegistry or false) (lib.attrValues nodes);
+  registryIps = map (n: n.serviceIp) registryNodes;
+
+  # Prioritize current node, then fallback to other registry nodes
+  targetIps = [ cfg.serviceIp ] ++ (lib.filter (ip: ip != cfg.serviceIp) registryIps);
+
+  # Format as space-separated string with port 8600
+  consulUpstreams = lib.concatStringsSep " " (map (ip: "${ip}:8600") targetIps);
 in
 {
   services.coredns = {
@@ -20,8 +30,12 @@ in
           rcode NOERROR
         }
 
+        forward consul ${consulUpstreams} {
+          policy sequential
+        }
+
         forward . tls://45.90.28.223 tls://45.90.30.223 {
-          except h00t.works.
+          except h00t.works. consul
           tls_servername 1663da.dns.nextdns.io
         }
       }
