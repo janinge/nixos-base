@@ -17,8 +17,8 @@ in
     enable = true;
     config = ''
       .:53 {
-        # Bind the DNS server to the service IP address for this host.
-        bind ${cfg.serviceIp}
+        # Bind the DNS server to the service IP address for this host and localhost.
+        bind ${cfg.serviceIp} 127.0.0.1
 
         # Serve `h00t.works` and `*.h00t.works` queries,
         # answering with the node's service IP.

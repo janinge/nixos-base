@@ -15,6 +15,8 @@ in {
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
+  networking.nameservers = [ "127.0.0.1" ];
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   networking.interfaces.${cfg.publicIf}.useDHCP = true;
 
