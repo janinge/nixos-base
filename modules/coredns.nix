@@ -20,6 +20,11 @@ in
         # Bind the DNS server to the service IP address for this host and localhost.
         bind ${cfg.serviceIp} 127.0.0.1
 
+        # Override for headscale.h00t.works
+        template IN A headscale.h00t.works. {
+          answer "headscale.h00t.works. 300 IN A 91.190.155.127"
+        }
+
         # Serve `h00t.works` and `*.h00t.works` queries,
         # answering with the node's service IP.
         template IN A h00t.works. {
