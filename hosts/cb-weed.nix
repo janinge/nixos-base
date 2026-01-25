@@ -6,6 +6,7 @@ in {
     ../modules/common.nix
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
+    ../modules/coredns.nix
     ../modules/patroni.nix
   ];
 
