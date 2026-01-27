@@ -60,7 +60,12 @@
     zsh tmux curl wget jq unzip
     nomad consul
     tailscale
-    lzop pv mbuffer
+    lzop pv mbuffer lsof
+
+    ethtool conntrack-tools
+    termshark tcpdump mtr traceroute
+    dig
+    socat iperf3 iftop
   ];
 
   environment.variables = {
