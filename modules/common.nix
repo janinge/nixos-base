@@ -5,7 +5,13 @@
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "no";
 
+  networking.firewall.checkReversePath = "loose";
   networking.firewall.enable = false;
+
+  boot.kernel.sysctl = {
+    "net.ipv4.conf.all.rp_filter" = 0;
+    "net.ipv4.conf.default.rp_filter" = 0;
+  };
 
   services.openssh = {
     enable = true;
