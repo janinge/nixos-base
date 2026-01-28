@@ -223,6 +223,10 @@ in
       services.traefik = {
         enable = true;
         staticConfigOptions = {
+          log = {
+            level = "DEBUG";
+          };
+          accessLog = {};
           api = {
             dashboard = true;
             insecure = false;
@@ -249,10 +253,7 @@ in
           providers.consulCatalog = {
             endpoint.address = "127.0.0.1:8500";
             exposedByDefault = false;
-            prefix = "traefik";
             watch = true;
-            stale = true;
-            cache = true;
           };
           certificatesResolvers.letsencrypt.acme = {
             storage = "/var/lib/traefik/acme.json";
