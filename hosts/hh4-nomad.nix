@@ -6,7 +6,6 @@ in {
     ../modules/common.nix
     ../modules/power.nix
     ../modules/nomad.nix
-    ../modules/tailscale.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
     ../modules/seaweedfs.nix
@@ -32,14 +31,6 @@ in {
 
   services.resolved.enable = true;
   services.resolved.fallbackDns = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
-
-  services.tailscale = {
-    enable = true;
-    useRoutingFeatures = "both";
-    extraSetFlags = [
-      "--advertise-routes=${cfg.routedSubnet}"
-    ];
-  };
 
   cluster.nomad.server.enable = true;
 
