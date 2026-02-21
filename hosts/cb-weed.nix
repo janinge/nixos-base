@@ -1,4 +1,4 @@
-{ lib, nodes, hostName, ... }:
+{ lib, nodes, hostName, sharedVolumes, ... }:
 let
   cfg = nodes.${hostName};
 in {
@@ -50,17 +50,8 @@ in {
 
   cluster.nomad.client = {
     enable = true;
-    hostVolumes = {
-      "local-stalwart" = {
-        path = "/var/lib/nomad-volumes/stalwart";
-        readOnly = false;
-        createDir = true;
-      };
-      "seaweedfs" = {
-        path = "/mnt/seaweedfs";
-        readOnly = false;
-        createDir = false;
-      };
+    hostVolumes = sharedVolumes // {
+      # Node-specific volumes here, if any
     };
   };
 

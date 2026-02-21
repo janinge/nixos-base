@@ -13,6 +13,7 @@
     defaultSystem = "x86_64-linux";
     lib = nixpkgs.lib;
     nodes = import ./cluster/nodes.nix;
+    sharedVolumes = import ./cluster/volumes.nix;
 
     hostFiles = builtins.readDir ./hosts;
 
@@ -35,7 +36,7 @@
             inherit system;
             modules = mkModules nodeCfg ++ [ ./hosts/${fileName} ];
             specialArgs = {
-              inherit nodes hostName;
+              inherit nodes hostName sharedVolumes;
               pkgs-unstable = import nixpkgs-unstable {
                 inherit system;
                 config.allowUnfree = true;
