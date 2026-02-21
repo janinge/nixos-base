@@ -29,6 +29,12 @@ in {
     { address = cfg.serviceIp; prefixLength = 24; }
   ];
 
+  boot.kernel.sysctl = {
+    "net.ipv6.conf.default.accept_ra" = 1;
+    "net.ipv6.conf.all.accept_ra" = 1;
+    "net.ipv6.conf.all.accept_ra_rt_info_max_plen" = 64;
+  };
+
   services.resolved.enable = true;
   services.resolved.fallbackDns = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
 
