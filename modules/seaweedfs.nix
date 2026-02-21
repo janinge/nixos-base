@@ -156,6 +156,26 @@ in
             default = 1000;
             description = "Cache size in MB";
           };
+
+          dataCenter = mkOption {
+            type = types.str;
+            default = nodeCfg.datacenter or "default";
+            description = ''
+              Data center label used to prefer nearby volume servers when
+              reading. Should match the -dataCenter value used by the volume
+              servers at this site so that cross-WAN reads are avoided.
+            '';
+          };
+
+          rack = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = ''
+              Rack label used to further prefer volume servers on the same
+              rack within the data center. Leave null to rely on dataCenter
+              locality only.
+            '';
+          };
         };
       });
       default = null;
@@ -291,6 +311,8 @@ in
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
             -cacheCapacityMB=${toString cfg.mount.cacheSizeMB} \
+            -dataCenter=${cfg.mount.dataCenter} \
+            ${optionalString (cfg.mount.rack != null) "-rack=${cfg.mount.rack}"} \
             ${optionalString cfg.mount.allowOthers "-allowOthers"} \
             ${optionalString cfg.mount.readOnly "-readOnly"} \
             -dirAutoCreate
