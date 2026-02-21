@@ -123,13 +123,6 @@ in
           name = hostName;
           data_dir = "/var/lib/nomad";
           bind_addr = nodeCfg.serviceIp;
-          meta = {
-            service_ip = nodeCfg.serviceIp;
-            service_bridge = nodeCfg.serviceBridge;
-            public_if = nodeCfg.publicIf;
-            routed_subnet = nodeCfg.routedSubnet;
-            datacenter = nodeCfg.datacenter;
-          };
           telemetry.publish_allocation_metrics = true;
           datacenter = "earth";
           consul = {
@@ -351,6 +344,15 @@ in
               cidr = "${nodeCfg.serviceIp}/32";
               interface = nodeCfg.serviceBridge;
             };
+          };
+
+          # Node metadata for use in job constraint/affinity filtering
+          meta = {
+            service_ip = nodeCfg.serviceIp;
+            service_bridge = nodeCfg.serviceBridge;
+            public_if = nodeCfg.publicIf;
+            routed_subnet = nodeCfg.routedSubnet;
+            datacenter = nodeCfg.datacenter;
           };
         };
 
