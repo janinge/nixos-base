@@ -81,6 +81,8 @@ in
     "zswap.enabled=1"
     "zswap.compressor=zstd"
     "zswap.zpool=zsmalloc"
+    "console=tty0"
+    "console=ttyS0,115200n8"
   ];
 
   boot.loader.grub = {
