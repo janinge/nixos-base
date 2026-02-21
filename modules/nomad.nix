@@ -327,6 +327,7 @@ in
 
         client = {
           enabled = true;
+          node_class = nodeCfg.datacenter;
           cni_config_dir = "/etc/cni/net.d";
           network_interface = nodeCfg.serviceBridge;
           options = {
