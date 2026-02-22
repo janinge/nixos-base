@@ -21,6 +21,13 @@ in
   options.cluster.nomad = {
     server = {
       enable = lib.mkEnableOption "Nomad Server Role";
+      gateway = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = nodeCfg.isGateway or false;
+          description = "Enable edge gateway role (Traefik)";
+        };
+      };
     };
     client = {
       enable = lib.mkEnableOption "Nomad Client Role";
@@ -183,7 +190,10 @@ in
           raft_multiplier = 5;
         };
       };
+    })
 
+    # Gateway specific configuration (Traefik)
+    (lib.mkIf cfg.server.gateway.enable {
       sops.secrets.aws_route53_access_key_id = {
         owner = "traefik";
         restartUnits = [ "traefik.service" ];

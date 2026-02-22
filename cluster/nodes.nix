@@ -8,6 +8,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     isRegistry = true;
+    isGateway = true;
     weedMaster = true;
     weedFiler = true;
     patroni = true;
@@ -36,6 +37,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     isRegistry = true;
+    isGateway = true;
     weedMaster = true;
     patroni = true;
   };
