@@ -53,7 +53,11 @@ in {
     hostVolumes = sharedVolumes // {
       # Node-specific volumes here, if any
     };
-    jobSecrets = [ "authentik.env" ];
+    jobSecrets = {
+      "authentik.env" = {
+        target = "/var/lib/nomad-volumes/authentik/authentik.env";
+      };
+    };
   };
 
   cluster.patroni.enable = true;
