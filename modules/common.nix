@@ -65,7 +65,7 @@
     ethtool conntrack-tools
     termshark tcpdump mtr traceroute
     dig
-    socat iperf3 iftop
+    socat iperf3 iftop nethogs bmon
   ];
 
   environment.variables = {
