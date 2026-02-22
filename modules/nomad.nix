@@ -332,7 +332,9 @@ in
 
       services.nomad.settings = {
         plugin."nomad-driver-podman" = {
-          config = { };
+          config = {
+            log_level = "warn";
+          };
         };
 
         client = {
