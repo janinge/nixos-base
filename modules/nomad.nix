@@ -436,8 +436,6 @@ in
           # CAP_NET_ADMIN is needed for CNI network creation
           CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
           AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" ];
-
-          Environment = [ "NOMAD_DRIVER_PODMAN_LOG_LEVEL=warn" "PODMAN_LOG_LEVEL=warn" ];
         };
       };
 
