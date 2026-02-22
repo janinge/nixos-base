@@ -32,6 +32,13 @@ in
     client = {
       enable = lib.mkEnableOption "Nomad Client Role";
 
+      jobSecrets = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "List of SOPS secret names to distribute to this Nomad client. They will be readable by the nomad user for use in deployment templates.";
+        example = [ "authentik.env" "postgres.env" ];
+      };
+
       hostVolumes = lib.mkOption {
         type = lib.types.attrsOf (lib.types.submodule {
           options = {
@@ -323,6 +330,13 @@ in
     # Client specific configuration
     (lib.mkIf cfg.client.enable {
       services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
+
+      # Generates sops.secrets for items passed in the list
+      sops.secrets = lib.genAttrs cfg.client.jobSecrets (secretName: {
+        owner = "nomad";
+        group = "nomad";
+        mode = "0440";
+      });
 
       # Create directories for host volumes that request it
       # Owned by nomad:nomad because Nomad runs as user 'nomad'

@@ -45,6 +45,7 @@ in {
     hostVolumes = sharedVolumes // {
       # Node-specific volumes here, if any
     };
+    jobSecrets = [ "authentik.env" ];
   };
 
   services.seaweedfs = {

@@ -53,6 +53,7 @@ in {
     hostVolumes = sharedVolumes // {
       # Node-specific volumes here, if any
     };
+    jobSecrets = [ "authentik.env" ];
   };
 
   cluster.patroni.enable = true;

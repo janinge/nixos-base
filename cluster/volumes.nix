@@ -6,6 +6,11 @@
     readOnly = false;
     createDir = true;
   };
+  "weed-authentik" = {
+    path = "/mnt/seaweedfs/authentik";
+    readOnly = false;
+    createDir = false;
+  };
   "weed-music" = {
     path = "/mnt/seaweedfs/music";
     readOnly = true;
