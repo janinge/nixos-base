@@ -227,7 +227,7 @@ in
         enable = true;
         staticConfigOptions = {
           log = {
-            level = "DEBUG";
+            level = "INFO";
           };
           accessLog = {};
           api = {
