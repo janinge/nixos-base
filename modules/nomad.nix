@@ -375,6 +375,11 @@ in
             "driver.denylist" = "docker";
           };
 
+          # Allow Nomad templates to read outside the task directory on the host natively
+          template = {
+            disable_file_sandbox = true;
+          };
+
           # Map configured host volumes to Nomad settings
           host_volume = lib.mapAttrs (name: vol: {
             path = vol.path;
