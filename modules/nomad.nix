@@ -308,18 +308,39 @@ in
                 };
               };
             };
-            middlewares.hsts = {
-              headers = {
-                stsSeconds = 63072000;
-                stsIncludeSubdomains = true;
-                stsPreload = true;
+            middlewares = {
+              hsts = {
+                headers = {
+                  stsSeconds = 63072000;
+                  stsIncludeSubdomains = true;
+                  stsPreload = true;
 
-                contentTypeNosniff = true;
-                browserXssFilter = true;
-                frameDeny = true;
+                  contentTypeNosniff = true;
+                  browserXssFilter = true;
+                  frameDeny = true;
 
-                referrerPolicy = "strict-origin-when-cross-origin";
-                permissionsPolicy = "camera=(), microphone=(), geolocation=()";
+                  referrerPolicy = "strict-origin-when-cross-origin";
+                  permissionsPolicy = "camera=(), microphone=(), geolocation=()";
+                };
+              };
+              authentik = {
+                forwardAuth = {
+                  address = "https://auth.h00t.works/outpost.goauthentik.io/auth/traefik";
+                  trustForwardHeader = true;
+                  authResponseHeaders = [
+                    "X-authentik-username"
+                    "X-authentik-groups"
+                    "X-authentik-email"
+                    "X-authentik-name"
+                    "X-authentik-uid"
+                    "X-authentik-jwt"
+                    "X-authentik-meta-jwks"
+                    "X-authentik-meta-outpost"
+                    "X-authentik-meta-provider"
+                    "X-authentik-meta-app"
+                    "X-authentik-meta-version"
+                  ];
+                };
               };
             };
           };
