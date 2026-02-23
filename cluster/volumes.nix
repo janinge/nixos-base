@@ -13,17 +13,12 @@
   };
   "weed-music" = {
     path = "/mnt/seaweedfs/music";
-    readOnly = true;
+    readOnly = false;
     createDir = false;
   };
   "weed-p2p" = {
     path = "/mnt/seaweedfs/p2p";
     readOnly = false;
     createDir = false;
-  };
-  "local-p2p" = {
-    path = "/var/lib/nomad-volumes/p2p";
-    readOnly = false;
-    createDir = true;
   };
 }
