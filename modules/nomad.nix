@@ -33,21 +33,10 @@ in
       enable = lib.mkEnableOption "Nomad Client Role";
 
       jobSecrets = lib.mkOption {
-        type = lib.types.attrsOf (lib.types.submodule {
-          options = {
-            target = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Absolute path where the secret should be placed. If null, defaults to /run/secrets/<name>.";
-            };
-          };
-        });
-        default = {};
-        description = "Map of SOPS secret names to configuration. Distribute them to this Nomad client, readable by the nomad user.";
-        example = {
-          "authentik.env" = { target = "/var/lib/nomad-volumes/authentik/authentik.env"; };
-          "postgres.env" = {}; # Uses default /run/secrets/
-        };
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "List of SOPS secret names to distribute to this Nomad client. They will be readable by the nomad user for use in deployment templates.";
+        example = [ "authentik.env" "postgres.env" ];
       };
 
       hostVolumes = lib.mkOption {
@@ -342,24 +331,18 @@ in
     (lib.mkIf cfg.client.enable {
       services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
 
-      # Map config to SOPS secrets, inject explicit path if target is configured
-      sops.secrets = lib.mapAttrs (secretName: opts: {
+      # Generates sops.secrets for items passed in the list
+      sops.secrets = lib.genAttrs cfg.client.jobSecrets (secretName: {
         owner = "nomad";
         group = "nomad";
         mode = "0440";
-      } // lib.optionalAttrs (opts.target != null) {
-        path = opts.target;
-      }) cfg.client.jobSecrets;
+      });
 
-      # Create directories for custom target paths and host volumes
-      systemd.tmpfiles.rules =
-        (lib.mapAttrsToList (name: vol:
-          "d ${vol.path} 0755 nomad nomad -"
-        ) (lib.filterAttrs (n: v: v.createDir) cfg.client.hostVolumes))
-        ++
-        (lib.mapAttrsToList (name: opts:
-          "d ${builtins.dirOf opts.target} 0750 nomad nomad -"
-        ) (lib.filterAttrs (n: v: v.target != null) cfg.client.jobSecrets));
+      # Create directories for host volumes that request it
+      # Owned by nomad:nomad because Nomad runs as user 'nomad'
+      systemd.tmpfiles.rules = lib.mapAttrsToList (name: vol:
+        "d ${vol.path} 0755 nomad nomad -"
+      ) (lib.filterAttrs (n: v: v.createDir) cfg.client.hostVolumes);
 
       services.nomad.settings = {
         plugin."nomad-driver-podman" = {

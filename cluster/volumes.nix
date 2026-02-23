@@ -6,10 +6,10 @@
     readOnly = false;
     createDir = true;
   };
-  "local-authentik" = {
-    path = "/var/lib/nomad-volumes/authentik";
+  "weed-authentik" = {
+    path = "/mnt/seaweedfs/authentik";
     readOnly = false;
-    createDir = true;
+    createDir = false;
   };
   "weed-music" = {
     path = "/mnt/seaweedfs/music";
