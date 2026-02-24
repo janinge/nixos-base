@@ -1,4 +1,4 @@
-{ lib, nodes, hostName, sharedVolumes, ... }:
+{ lib, nodes, hostName, sharedVolumes, pkgs, ... }:
 let
   cfg = nodes.${hostName};
 in {
@@ -7,6 +7,15 @@ in {
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
   ];
+
+  # Hypervisor specific tuning
+  boot.kernelParams = [
+    "clocksource=acpi_pm" # Bhyve often struggles with TSC sync; acpi_pm is more stable than HPET
+    "clearcpuid=514"      # Helps with some Ryzen-specific sleep state issues in VMs
+  ];
+
+  # Ensure we don't try to load intel-specific modules
+  boot.blacklistedKernelModules = [ "kvm_intel" ];
 
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
