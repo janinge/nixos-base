@@ -5,6 +5,7 @@ keys:
   - &lw_gw age1r8myunsfjm29rvzs6lra9sh8lnu93dfyxu8k58kr23qujt062c8sznz074
   - &aws_gw age1ala0nnlnsclr8zg7phd0w53nd5y868u7un4ucggm9v27855fjg7sa4fsc0
   - &cb_weed age1j9jfsf0aw3fkavmndpr4k6wcm0uyzq64jgerz9gace87u8v6659s4shh97
+  - &fbv_c2_01 age1jhz6m6kcqj8f5gfddx5zylhjsuuazg767aalgzss3p49dvj9tpys6kh2km
 
 creation_rules:
   # Site specific: hh4
@@ -24,3 +25,4 @@ creation_rules:
           - *lw_gw
           - *aws_gw
           - *cb_weed
+          - *fbv_c2_01

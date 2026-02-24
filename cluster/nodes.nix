@@ -52,6 +52,16 @@
     publicIf = "enp1s0";
   };
 
+  fbv-c2-01 = {
+    datacenter = "bgo-fb";
+    hostId = "155e3659";
+    diskLayout = "ext4-vm";
+    routedSubnet = "10.42.10.0/24";
+    serviceIp = "10.42.10.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "enp0s5";
+  };
+
   hh4-nomad = {
     datacenter = "bgo-hh";
     hostId = "f2d31c54";
