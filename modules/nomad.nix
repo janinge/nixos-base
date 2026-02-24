@@ -112,6 +112,7 @@ in
 
       systemd.tmpfiles.rules = [
         "d /var/lib/nomad 0750 nomad nomad -"
+        "d /var/lib/alloc_mounts 0755 nomad nomad -"
       ];
 
       # Ensure Nomad and Consul start after Tailscale is fully online
