@@ -56,6 +56,7 @@
     datacenter = "bgo-fb";
     hostId = "155e3659";
     diskLayout = "ext4-vm";
+    rootDevice = "/dev/sda";
     routedSubnet = "10.42.10.0/24";
     serviceIp = "10.42.10.1";
     serviceBridge = "cni-nomad0";
