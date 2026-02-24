@@ -121,9 +121,14 @@ in
           # Wait for SeaweedFS mount if it is enabled on this host
           ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
 
-        wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
+        wants = lib.optional config.services.tailscale.enable "tailscale-online.service"
+          ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
 
-        requires = lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
+        serviceConfig = {
+          Restart = lib.mkForce "on-failure";
+          RestartSec = lib.mkForce "10s";
+          StartLimitIntervalSec = lib.mkForce 0;
+        };
       };
 
       systemd.services.consul = {
