@@ -7,30 +7,34 @@ let
   nodeCfg = nodes.${hostName};
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
-  filerNodes = lib.filter (n: n ? "weedFiler" && n.weedFiler) (lib.attrValues nodes);
+  filerNodesWithNames = lib.filter
+    (entry: entry.node ? "weedFiler" && entry.node.weedFiler)
+    (lib.mapAttrsToList (name: node: { inherit name node; }) nodes);
 
   masterAddresses = lib.map (n: "${n.serviceIp}:9333") masterNodes;
 
-  allFilerAdresses = lib.map (n: "${n.serviceIp}:8888") filerNodes;
+  sortNodeEntriesByName = lib.sort (a: b: a.name < b.name);
 
-  # If this node is a filer, put it first
-  orderedFilerAddresses = if (nodeCfg ? "weedFiler" && nodeCfg.weedFiler) then
-    [ "${nodeCfg.serviceIp}:8888" ] ++ (lib.remove "${nodeCfg.serviceIp}:8888" allFilerAdresses)
-  else
-    allFilerAdresses;
+  localFilerNodes = sortNodeEntriesByName (lib.filter (entry: entry.name == hostName) filerNodesWithNames);
+  remoteFilerNodes = sortNodeEntriesByName (lib.filter (entry: entry.name != hostName) filerNodesWithNames);
 
-  # Use proper TOML format
-  tomlFormat = pkgs.formats.toml {};
+  sameDcFilerNodes = sortNodeEntriesByName
+    (lib.filter (entry: (entry.node.datacenter or null) == (nodeCfg.datacenter or null)) filerNodesWithNames);
+  otherDcFilerNodes = sortNodeEntriesByName
+    (lib.filter (entry: (entry.node.datacenter or null) != (nodeCfg.datacenter or null)) filerNodesWithNames);
 
-  # Filer configuration
-  filerConfig = {
-    leveldb2 = {
-      enabled = true;
-      dir = cfg.filer.dbDir;
-    };
-  };
+  discoveredFilerAddresses = map (entry: "${entry.node.serviceIp}:8888") (
+    if (nodeCfg ? "weedFiler" && nodeCfg.weedFiler) then
+      localFilerNodes ++ remoteFilerNodes
+    else
+      sameDcFilerNodes ++ otherDcFilerNodes
+  );
 
-  filerToml = tomlFormat.generate "filer.toml" filerConfig;
+  orderedFilerAddresses =
+    if cfg.mount != null && cfg.mount.filerServers != null then
+      cfg.mount.filerServers
+    else
+      discoveredFilerAddresses;
 
   # Determine if any component is enabled
   isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
@@ -42,7 +46,7 @@ in
   options.services.seaweedfs = {
     master = {
       enable = mkEnableOption "SeaweedFS master server";
-      
+
       port = mkOption {
         type = types.port;
         default = 9333;
@@ -64,7 +68,7 @@ in
 
     volume = {
       enable = mkEnableOption "SeaweedFS volume server";
-      
+
       port = mkOption {
         type = types.port;
         default = 1133;
@@ -98,7 +102,7 @@ in
 
     filer = {
       enable = mkEnableOption "SeaweedFS filer server";
-      
+
       port = mkOption {
         type = types.port;
         default = 8888;
@@ -117,6 +121,68 @@ in
         description = "Directory for LevelDB database";
       };
 
+      store = mkOption {
+        type = types.enum [ "leveldb2" "postgres2" ];
+        default = "leveldb2";
+        description = "Metadata backend used by SeaweedFS filer";
+      };
+
+      postgres = {
+        hostname = mkOption {
+          type = types.str;
+          default = "postgres-cluster.service.consul";
+          description = "PostgreSQL writer endpoint hostname (typically Consul DNS)";
+        };
+
+        port = mkOption {
+          type = types.port;
+          default = 5432;
+          description = "PostgreSQL port";
+        };
+
+        database = mkOption {
+          type = types.str;
+          default = "seaweedfs_filer";
+          description = "PostgreSQL database used for filer metadata";
+        };
+
+        username = mkOption {
+          type = types.str;
+          default = "seaweedfs";
+          description = "PostgreSQL username used for filer metadata";
+        };
+
+        passwordFile = mkOption {
+          type = types.nullOr types.path;
+          default = null;
+          description = "Path to a file containing the PostgreSQL password";
+        };
+
+        sslmode = mkOption {
+          type = types.str;
+          default = "require";
+          description = "PostgreSQL SSL mode";
+        };
+
+        connectionMaxIdle = mkOption {
+          type = types.int;
+          default = 2;
+          description = "Maximum idle PostgreSQL connections";
+        };
+
+        connectionMaxOpen = mkOption {
+          type = types.int;
+          default = 100;
+          description = "Maximum open PostgreSQL connections";
+        };
+
+        createTable = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Automatically create filer metadata tables";
+        };
+      };
+
       defaultReplicaPlacement = mkOption {
         type = types.str;
         default = "100";
@@ -131,6 +197,12 @@ in
             type = types.str;
             description = "Local path to mount the filer";
             example = "/mnt/seaweedfs";
+          };
+
+          filerServers = mkOption {
+            type = types.nullOr (types.listOf types.str);
+            default = null;
+            description = "Optional explicit list of filer servers in host:port format";
           };
 
           allowOthers = mkOption {
@@ -184,7 +256,20 @@ in
   };
 
   config = mkIf isEnabled {
-    
+    assertions = [
+      {
+        assertion = !(cfg.filer.enable && cfg.filer.store == "postgres2") || cfg.filer.postgres.passwordFile != null;
+        message = "services.seaweedfs.filer.postgres.passwordFile must be set when services.seaweedfs.filer.store = \"postgres2\".";
+      }
+    ];
+
+    sops.secrets.seaweedfs_postgres_password = mkIf (cfg.filer.enable && cfg.filer.store == "postgres2") {
+      sopsFile = ../secrets/secrets.yaml;
+      owner = "root";
+      group = "seaweedfs";
+      mode = "0440";
+    };
+
     # Create seaweedfs user and group
     users.groups.seaweedfs = {};
     users.users.seaweedfs = {
@@ -202,8 +287,8 @@ in
       "d ${cfg.volume.dataDir} 0750 seaweedfs seaweedfs -"
     ++ optionals cfg.filer.enable [
       "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
+    ] ++ optionals (cfg.filer.enable && cfg.filer.store == "leveldb2") [
       "d ${cfg.filer.dbDir} 0750 seaweedfs seaweedfs -"
-      "L+ /etc/seaweedfs/filer.toml - - - - ${filerToml}"
     ] ++ optionals (cfg.mount != null) [
       "d ${cfg.mount.mountPoint} 0755 root root -"
       "d ${cfg.mount.cacheDir} 0750 root root -"
@@ -270,11 +355,42 @@ in
       after = [ "network.target" "seaweedfs-master.service" ] ++ tailscaleDependency;
       wants = tailscaleDependency;
 
+      preStart = ''
+        install -d -m 0755 -o root -g root /etc/seaweedfs
+      '' + (if cfg.filer.store == "postgres2" then ''
+        db_password="$(${pkgs.coreutils}/bin/cat "${cfg.filer.postgres.passwordFile}")"
+        escaped_db_password="$(${pkgs.coreutils}/bin/printf '%s' "$db_password" | ${pkgs.gnused}/bin/sed -e 's/[\\"]/\\&/g')"
+
+        cat > /etc/seaweedfs/filer.toml <<EOF2
+[postgres2]
+enabled = true
+hostname = "${cfg.filer.postgres.hostname}"
+port = ${toString cfg.filer.postgres.port}
+username = "${cfg.filer.postgres.username}"
+password = "$escaped_db_password"
+database = "${cfg.filer.postgres.database}"
+sslmode = "${cfg.filer.postgres.sslmode}"
+connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
+connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
+createTable = ${if cfg.filer.postgres.createTable then "true" else "false"}
+EOF2
+      '' else ''
+        cat > /etc/seaweedfs/filer.toml <<EOF2
+[leveldb2]
+enabled = true
+dir = "${cfg.filer.dbDir}"
+EOF2
+      '') + ''
+        chown root:seaweedfs /etc/seaweedfs/filer.toml
+        chmod 0640 /etc/seaweedfs/filer.toml
+      '';
+
       serviceConfig = {
         Type = "simple";
         User = "seaweedfs";
         Group = "seaweedfs";
         WorkingDirectory = "/var/lib/seaweedfs";
+        PermissionsStartOnly = true;
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed filer \
             -ip=${nodeCfg.serviceIp} \

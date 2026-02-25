@@ -1,4 +1,4 @@
-{ lib, nodes, hostName, ... }:
+{ config, lib, nodes, hostName, ... }:
 let
   cfg = nodes.${hostName};
 in {
@@ -39,7 +39,17 @@ in {
 
   services.seaweedfs = {
     master.enable = true;
-    filer.enable = true;
+    filer = {
+      enable = true;
+      store = "postgres2";
+      postgres = {
+        hostname = "postgres-cluster.service.consul";
+        database = "seaweedfs_filer";
+        username = "seaweedfs";
+        passwordFile = config.sops.secrets.seaweedfs_postgres_password.path;
+        createTable = true;
+      };
+    };
   };
 
   services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {

@@ -1,4 +1,4 @@
-{ lib, nodes, hostName, sharedVolumes, ... }:
+{ config, lib, nodes, hostName, sharedVolumes, ... }:
 let
   cfg = nodes.${hostName};
 in {
@@ -60,6 +60,16 @@ in {
 
   services.seaweedfs = {
     master.enable = true;
+    filer = {
+      enable = true;
+      store = "postgres2";
+      postgres = {
+        hostname = "postgres-cluster.service.consul";
+        database = "seaweedfs_filer";
+        username = "seaweedfs";
+        passwordFile = config.sops.secrets.seaweedfs_postgres_password.path;
+      };
+    };
 
     volume = {
       enable = true;

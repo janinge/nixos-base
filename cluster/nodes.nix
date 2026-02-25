@@ -39,6 +39,7 @@
     isRegistry = true;
     isGateway = true;
     weedMaster = true;
+    weedFiler = true;
     patroni = true;
   };
 
@@ -73,6 +74,7 @@
     publicIf = "enp1s0";
     isRegistry = true;
     weedMaster = true;
+    weedFiler = true;
     patroni = true;
   };
 }
