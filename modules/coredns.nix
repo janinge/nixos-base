@@ -27,11 +27,12 @@ in
 
         # Serve `h00t.works` and `*.h00t.works` queries,
         # answering with the node's service IP.
-        template IN A h00t.works. {
+        template IN A (.*\.)?h00t\.works\. {
           answer "{{ .Name }} 300 IN A ${cfg.serviceIp}"
         }
 
-        template IN ANY h00t.works. {
+        # Silence IPv6
+        template IN AAAA (.*\.)?h00t\.works\. {
           rcode NOERROR
         }
 
@@ -40,7 +41,7 @@ in
         }
 
         forward . tls://45.90.28.223 tls://45.90.30.223 {
-          except h00t.works. consul
+          except consul
           tls_servername 1663da.dns.nextdns.io
         }
       }
