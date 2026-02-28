@@ -162,6 +162,10 @@ in
           node_name = "consul-${hostName}";
           bind_addr = nodeCfg.serviceIp;
           datacenter = "earth";
+          node_meta = {
+            site = nodeCfg.datacenter;
+            host = hostName;
+          };
         };
       };
 

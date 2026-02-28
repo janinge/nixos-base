@@ -5,6 +5,7 @@ with lib;
 let
   cfg = config.services.seaweedfs;
   nodeCfg = nodes.${hostName};
+  filerSite = nodeCfg.datacenter or "default";
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
   filerNodesWithNames = lib.filter
@@ -187,6 +188,30 @@ in
         type = types.str;
         default = "100";
         description = "Default replication placement for filer metadata";
+      };
+
+      consul = {
+        enable = mkOption {
+          type = types.bool;
+          default = config.services.consul.enable;
+          description = "Register the filer in the local Consul agent.";
+        };
+
+        serviceName = mkOption {
+          type = types.str;
+          default = "seaweedfs-filer";
+          description = ''
+            Consul service name for filer discovery. Consumers can resolve
+            <site>.<service>.service.consul for site-local lookup and
+            <service>.service.consul for global fallback.
+          '';
+        };
+
+        extraTags = mkOption {
+          type = types.listOf types.str;
+          default = [];
+          description = "Additional Consul tags appended to the standard filer tags.";
+        };
       };
     };
 
@@ -403,6 +428,33 @@ EOF2
         '';
         Restart = "on-failure";
         RestartSec = "10s";
+      };
+    };
+
+    environment.etc = mkIf (cfg.filer.enable && cfg.filer.consul.enable && config.services.consul.enable) {
+      "consul.d/seaweedfs-filer.json".text = builtins.toJSON {
+        services = [
+          {
+            name = cfg.filer.consul.serviceName;
+            id = "${cfg.filer.consul.serviceName}-${hostName}";
+            address = nodeCfg.serviceIp;
+            port = cfg.filer.port;
+            tags = unique ([ "seaweedfs" "filer" filerSite ] ++ cfg.filer.consul.extraTags);
+            meta = {
+              site = filerSite;
+              host = hostName;
+            };
+            checks = [
+              {
+                id = "${cfg.filer.consul.serviceName}-${hostName}-tcp";
+                name = "SeaweedFS filer TCP";
+                tcp = "${nodeCfg.serviceIp}:${toString cfg.filer.port}";
+                interval = "10s";
+                timeout = "1s";
+              }
+            ];
+          }
+        ];
       };
     };
 
