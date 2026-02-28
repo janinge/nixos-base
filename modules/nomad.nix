@@ -279,7 +279,9 @@ in
             storage = "/var/lib/traefik/acme.json";
             dnsChallenge = {
               provider = "route53";
-              delayBeforeCheck = 60;
+              propagation = {
+                delayBeforeChecks = "60s";
+              };
             };
           };
         };
