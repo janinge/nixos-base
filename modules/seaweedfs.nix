@@ -277,6 +277,7 @@ in
         sslmode = "${cfg.filer.postgres.sslmode}"
         connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
         connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
+        enableUpsert = false
         createTable = """
           CREATE TABLE IF NOT EXISTS "filemeta" (
             dirhash   BIGINT,
