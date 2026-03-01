@@ -27,12 +27,12 @@ in
 
         # Serve `h00t.works` and `*.h00t.works` queries,
         # answering with the node's service IP.
-        template IN A (.*\.)?h00t\.works\. {
+        template IN A h00t.works {
           answer "{{ .Name }} 300 IN A ${cfg.serviceIp}"
         }
 
         # Silence IPv6
-        template IN AAAA (.*\.)?h00t\.works\. {
+        template IN A h00t.works {
           rcode NOERROR
         }
 
