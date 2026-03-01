@@ -45,7 +45,6 @@ in {
         hostname = "postgres-cluster.service.consul";
         database = "seaweedfs_filer";
         username = "seaweedfs";
-        createTable = true;
       };
     };
   };

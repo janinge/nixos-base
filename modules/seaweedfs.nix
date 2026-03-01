@@ -158,12 +158,6 @@ in
           default = 100;
           description = "Maximum open PostgreSQL connections";
         };
-
-        createTable = mkOption {
-          type = types.bool;
-          default = true;
-          description = "Automatically create filer metadata tables";
-        };
       };
 
       defaultReplicaPlacement = mkOption {
@@ -283,7 +277,6 @@ in
         sslmode = "${cfg.filer.postgres.sslmode}"
         connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
         connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
-        createTable = ${if cfg.filer.postgres.createTable then "true" else "false"}
       '';
       owner = "root";
       group = "seaweedfs";
