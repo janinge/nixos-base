@@ -119,8 +119,8 @@ in
       postgres = {
         hostname = mkOption {
           type = types.str;
-          default = "postgres-cluster.service.consul";
-          description = "PostgreSQL writer endpoint hostname (typically Consul DNS)";
+          default = "primary.postgres-cluster.service.consul";
+          description = "PostgreSQL writer endpoint hostname (typically a Consul DNS tag-filtered primary service).";
         };
 
         port = mkOption {
