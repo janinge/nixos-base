@@ -143,8 +143,8 @@ in
 
         sslmode = mkOption {
           type = types.str;
-          default = "require";
-          description = "PostgreSQL SSL mode";
+          default = "disable";
+          description = "PostgreSQL SSL mode. Use \"disable\" unless PostgreSQL TLS is configured.";
         };
 
         connectionMaxIdle = mkOption {
