@@ -116,18 +116,6 @@ in
         description = "Directory to store filer metadata";
       };
 
-      dbDir = mkOption {
-        type = types.str;
-        default = "/var/lib/seaweedfs/filer/leveldb2";
-        description = "Directory for LevelDB database";
-      };
-
-      store = mkOption {
-        type = types.enum [ "leveldb2" "postgres2" ];
-        default = "leveldb2";
-        description = "Metadata backend used by SeaweedFS filer";
-      };
-
       postgres = {
         hostname = mkOption {
           type = types.str;
@@ -151,12 +139,6 @@ in
           type = types.str;
           default = "seaweedfs";
           description = "PostgreSQL username used for filer metadata";
-        };
-
-        passwordFile = mkOption {
-          type = types.nullOr types.path;
-          default = null;
-          description = "Path to a file containing the PostgreSQL password";
         };
 
         sslmode = mkOption {
@@ -281,15 +263,28 @@ in
   };
 
   config = mkIf isEnabled {
-    assertions = [
-      {
-        assertion = !(cfg.filer.enable && cfg.filer.store == "postgres2") || cfg.filer.postgres.passwordFile != null;
-        message = "services.seaweedfs.filer.postgres.passwordFile must be set when services.seaweedfs.filer.store = \"postgres2\".";
-      }
-    ];
-
-    sops.secrets.seaweedfs_postgres_password = mkIf (cfg.filer.enable && cfg.filer.store == "postgres2") {
+    sops.secrets.seaweedfs_postgres_password = mkIf cfg.filer.enable {
       sopsFile = ../secrets/secrets.yaml;
+      owner = "root";
+      group = "seaweedfs";
+      mode = "0440";
+      restartUnits = [ "seaweedfs-filer.service" ];
+    };
+
+    sops.templates."seaweedfs-filer.toml" = mkIf cfg.filer.enable {
+      content = ''
+        [postgres2]
+        enabled = true
+        hostname = "${cfg.filer.postgres.hostname}"
+        port = ${toString cfg.filer.postgres.port}
+        username = "${cfg.filer.postgres.username}"
+        password = "${config.sops.placeholder.seaweedfs_postgres_password}"
+        database = "${cfg.filer.postgres.database}"
+        sslmode = "${cfg.filer.postgres.sslmode}"
+        connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
+        connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
+        createTable = ${if cfg.filer.postgres.createTable then "true" else "false"}
+      '';
       owner = "root";
       group = "seaweedfs";
       mode = "0440";
@@ -312,8 +307,7 @@ in
       "d ${cfg.volume.dataDir} 0750 seaweedfs seaweedfs -"
     ++ optionals cfg.filer.enable [
       "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
-    ] ++ optionals (cfg.filer.enable && cfg.filer.store == "leveldb2") [
-      "d ${cfg.filer.dbDir} 0750 seaweedfs seaweedfs -"
+      "L+ /etc/seaweedfs/filer.toml - - - - ${config.sops.templates."seaweedfs-filer.toml".path}"
     ] ++ optionals (cfg.mount != null) [
       "d ${cfg.mount.mountPoint} 0755 root root -"
       "d ${cfg.mount.cacheDir} 0750 root root -"
@@ -380,42 +374,11 @@ in
       after = [ "network.target" "seaweedfs-master.service" ] ++ tailscaleDependency;
       wants = tailscaleDependency;
 
-      preStart = ''
-        install -d -m 0755 -o root -g root /etc/seaweedfs
-      '' + (if cfg.filer.store == "postgres2" then ''
-        db_password="$(${pkgs.coreutils}/bin/cat "${cfg.filer.postgres.passwordFile}")"
-        escaped_db_password="$(${pkgs.coreutils}/bin/printf '%s' "$db_password" | ${pkgs.gnused}/bin/sed -e 's/[\\"]/\\&/g')"
-
-        cat > /etc/seaweedfs/filer.toml <<EOF2
-[postgres2]
-enabled = true
-hostname = "${cfg.filer.postgres.hostname}"
-port = ${toString cfg.filer.postgres.port}
-username = "${cfg.filer.postgres.username}"
-password = "$escaped_db_password"
-database = "${cfg.filer.postgres.database}"
-sslmode = "${cfg.filer.postgres.sslmode}"
-connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
-connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
-createTable = ${if cfg.filer.postgres.createTable then "true" else "false"}
-EOF2
-      '' else ''
-        cat > /etc/seaweedfs/filer.toml <<EOF2
-[leveldb2]
-enabled = true
-dir = "${cfg.filer.dbDir}"
-EOF2
-      '') + ''
-        chown root:seaweedfs /etc/seaweedfs/filer.toml
-        chmod 0640 /etc/seaweedfs/filer.toml
-      '';
-
       serviceConfig = {
         Type = "simple";
         User = "seaweedfs";
         Group = "seaweedfs";
         WorkingDirectory = "/var/lib/seaweedfs";
-        PermissionsStartOnly = true;
         ExecStart = ''
           ${pkgs.seaweedfs}/bin/weed filer \
             -ip=${nodeCfg.serviceIp} \
