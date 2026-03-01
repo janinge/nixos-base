@@ -279,7 +279,7 @@ in
         connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
         enableUpsert = false
         createTable = """
-          CREATE TABLE IF NOT EXISTS "filemeta" (
+          CREATE TABLE IF NOT EXISTS "%s" (
             dirhash   BIGINT,
             name      VARCHAR(65535),
             directory VARCHAR(65535),
