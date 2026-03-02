@@ -2,6 +2,18 @@
 let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
+  seaweedMountPoint =
+    if config.services.seaweedfs.mount != null then
+      config.services.seaweedfs.mount.mountPoint
+    else
+      null;
+  seaweedHostVolumePaths =
+    if seaweedMountPoint != null then
+      lib.map (vol: vol.path) (lib.filter
+        (vol: vol.path == seaweedMountPoint || lib.hasPrefix "${seaweedMountPoint}/" vol.path)
+        (lib.attrValues cfg.client.hostVolumes))
+    else
+      [];
 
   # Helper variables for client configuration
   consulServers = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
@@ -117,12 +129,9 @@ in
 
       # Ensure Nomad and Consul start after Tailscale is fully online
       systemd.services.nomad = {
-        after = lib.optional config.services.tailscale.enable "tailscale-online.service"
-          # Wait for SeaweedFS mount if it is enabled on this host
-          ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
+        after = lib.optional config.services.tailscale.enable "tailscale-online.service";
 
-        wants = lib.optional config.services.tailscale.enable "tailscale-online.service"
-          ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
+        wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
 
         serviceConfig = {
           Restart = lib.mkForce "on-failure";
@@ -416,6 +425,11 @@ in
             public_if = nodeCfg.publicIf;
             routed_subnet = nodeCfg.routedSubnet;
             datacenter = nodeCfg.datacenter;
+          } // lib.optionalAttrs (seaweedMountPoint != null) {
+            # Seaweed-backed jobs should constrain on ${meta.storage_weed} == "ready".
+            # The dynamic sync unit clears its override when storage is unhealthy so
+            # this static default becomes visible again.
+            storage_weed = "not_ready";
           };
         };
 
@@ -488,6 +502,68 @@ in
           # CAP_NET_ADMIN is needed for CNI network creation
           CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
           AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" ];
+        };
+      };
+
+      systemd.services.nomad-storage-weed-sync = lib.mkIf (seaweedMountPoint != null) {
+        description = "Sync Nomad SeaweedFS storage readiness metadata";
+        after = [ "nomad.service" ] ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
+        wants = [ "nomad.service" ];
+        path = [
+          config.services.nomad.package
+          pkgs.coreutils
+          pkgs.util-linux
+          pkgs.jq
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = pkgs.writeShellScript "nomad-storage-weed-sync" ''
+            set -euo pipefail
+
+            mount_point=${lib.escapeShellArg seaweedMountPoint}
+            nomad_addr=${lib.escapeShellArg "http://${nodeCfg.serviceIp}:4646"}
+            seaweed_volume_paths=(
+            ${lib.concatMapStringsSep "\n" (path: "  ${lib.escapeShellArg path}") seaweedHostVolumePaths}
+            )
+
+            healthy=1
+
+            if ! mountpoint -q "$mount_point"; then
+              healthy=0
+            elif ! timeout 5s stat "$mount_point/." >/dev/null; then
+              healthy=0
+            else
+              for volume_path in "''${seaweed_volume_paths[@]}"; do
+                if ! timeout 5s stat "$volume_path" >/dev/null; then
+                  healthy=0
+                  break
+                fi
+              done
+            fi
+
+            metadata_json="$(nomad node meta read -address="$nomad_addr" -json)"
+            effective_value="$(printf '%s\n' "$metadata_json" | jq -r '.Meta.storage_weed // empty')"
+            dynamic_value="$(printf '%s\n' "$metadata_json" | jq -r 'if (.Dynamic | has("storage_weed")) then (.Dynamic.storage_weed // "__NULL__") else "__MISSING__" end')"
+
+            if [ "$healthy" -eq 1 ]; then
+              if [ "$effective_value" != "ready" ]; then
+                nomad node meta apply -address="$nomad_addr" storage_weed=ready
+              fi
+            elif [ "$dynamic_value" != "__MISSING__" ] && [ "$dynamic_value" != "__NULL__" ]; then
+              nomad node meta apply -address="$nomad_addr" -unset storage_weed
+            fi
+          '';
+        };
+      };
+
+      systemd.timers.nomad-storage-weed-sync = lib.mkIf (seaweedMountPoint != null) {
+        description = "Periodically refresh Nomad SeaweedFS storage readiness metadata";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "90s";
+          OnUnitActiveSec = "30s";
+          AccuracySec = "10s";
+          Unit = "nomad-storage-weed-sync.service";
         };
       };
 
