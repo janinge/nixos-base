@@ -525,6 +525,7 @@ in
             seaweed_volume_paths=(
             ${lib.concatMapStringsSep "\n" (path: "  ${lib.escapeShellArg path}") seaweedHostVolumePaths}
             )
+            metadata_json=""
 
             healthy=1
 
@@ -541,7 +542,20 @@ in
               done
             fi
 
-            metadata_json="$(nomad node meta read -address="$nomad_addr" -json)"
+            # During rebuilds the timer can fire before Nomad is listening even though
+            # systemd has already started the unit, so tolerate a short API startup race.
+            for _attempt in $(seq 1 10); do
+              if metadata_json="$(nomad node meta read -address="$nomad_addr" -json 2>/dev/null)"; then
+                break
+              fi
+              sleep 2
+            done
+
+            if [ -z "$metadata_json" ]; then
+              echo "Nomad client API at $nomad_addr is not ready yet; deferring metadata sync"
+              exit 0
+            fi
+
             effective_value="$(printf '%s\n' "$metadata_json" | jq -r '.Meta.storage_weed // empty')"
             dynamic_value="$(printf '%s\n' "$metadata_json" | jq -r 'if (.Dynamic | has("storage_weed")) then (.Dynamic.storage_weed // "__NULL__") else "__MISSING__" end')"
 
