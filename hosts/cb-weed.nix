@@ -56,7 +56,10 @@ in {
     jobSecrets = [ "authentik.env" ];
   };
 
-  cluster.patroni.enable = true;
+  cluster.patroni = {
+    enable = true;
+    extraClientCidrs = [ "192.168.0.0/16" ];
+  };
 
   services.seaweedfs = {
     master.enable = true;

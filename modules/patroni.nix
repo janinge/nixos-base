@@ -12,6 +12,7 @@ let
   # Find all nodes with Patroni enabled for the cluster
   patroniNodes = lib.filter (n: n ? "patroni" && n.patroni) (lib.attrValues nodes);
   patroniNodeIps = map (n: n.serviceIp) patroniNodes;
+  extraClientHbaSettings = map (cidr: "host all all ${cidr} scram-sha-256") cfg.extraClientCidrs;
 
   # Common Host-based authentication configuration
   pgHbaSettings = [
@@ -24,7 +25,7 @@ let
     # Tailnet
     "host replication replicator 100.64.0.0/10 scram-sha-256"
     "host all all 100.64.0.0/10 scram-sha-256"
-  ];
+  ] ++ extraClientHbaSettings;
 in
 {
   options.cluster.patroni = {
@@ -40,6 +41,15 @@ in
       type = types.int;
       default = 17;
       description = "PostgreSQL major version";
+    };
+
+    extraClientCidrs = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = ''
+        Additional client CIDRs to allow in Patroni-managed pg_hba.conf.
+        These entries are added as "host all all ... scram-sha-256" rules.
+      '';
     };
   };
 
