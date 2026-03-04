@@ -27,8 +27,6 @@ in {
   };
 
   services.seaweedfs = {
-    master.enable = true;
-
     volume = {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";
