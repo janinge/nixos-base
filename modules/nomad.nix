@@ -2,6 +2,7 @@
 let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
+  hasFiler = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   seaweedMountPoint =
     if config.services.seaweedfs.mount != null then
       config.services.seaweedfs.mount.mountPoint
@@ -174,6 +175,8 @@ in
           node_meta = {
             site = nodeCfg.datacenter;
             host = hostName;
+          } // lib.optionalAttrs hasFiler {
+            has_filer = "true";
           };
         };
       };
@@ -431,6 +434,9 @@ in
             public_if = nodeCfg.publicIf;
             routed_subnet = nodeCfg.routedSubnet;
             datacenter = nodeCfg.datacenter;
+            site = nodeCfg.datacenter;
+          } // lib.optionalAttrs hasFiler {
+            has_filer = "true";
           } // lib.optionalAttrs (seaweedMountPoint != null) {
             # Seaweed-backed jobs should constrain on ${meta.storage_weed} == "ready".
             # The dynamic sync unit clears its override when storage is unhealthy so

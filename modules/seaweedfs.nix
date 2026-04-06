@@ -5,6 +5,7 @@ with lib;
 let
   cfg = config.services.seaweedfs;
   nodeCfg = nodes.${hostName};
+  filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   filerSite = nodeCfg.datacenter or "default";
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
@@ -25,7 +26,7 @@ let
     (lib.filter (entry: (entry.node.datacenter or null) != (nodeCfg.datacenter or null)) filerNodesWithNames);
 
   discoveredFilerAddresses = map (entry: "${entry.node.serviceIp}:8888") (
-    if (nodeCfg ? "weedFiler" && nodeCfg.weedFiler) then
+    if filerNodeEnabled then
       localFilerNodes ++ remoteFilerNodes
     else
       sameDcFilerNodes ++ otherDcFilerNodes
@@ -257,6 +258,16 @@ in
   };
 
   config = mkIf isEnabled {
+    assertions = [
+      {
+        assertion = cfg.filer.enable == filerNodeEnabled;
+        message = ''
+          SeaweedFS filer topology mismatch on ${hostName}: services.seaweedfs.filer.enable
+          must match cluster/nodes.nix weedFiler so Consul and Nomad metadata stay aligned.
+        '';
+      }
+    ];
+
     sops.secrets.seaweedfs_postgres_password = mkIf cfg.filer.enable {
       sopsFile = ../secrets/secrets.yaml;
       owner = "root";
