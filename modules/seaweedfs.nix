@@ -270,6 +270,11 @@ in
 
   config = mkIf isEnabled {
     services.postgresPrimaryPgbouncer.enable = mkDefault cfg.filer.enable;
+    services.postgresPrimaryPgbouncer.users = mkIf cfg.filer.enable {
+      "${cfg.filer.postgres.username}" = {
+        passwordFile = config.sops.secrets.seaweedfs_postgres_password.path;
+      };
+    };
 
     assertions = [
       {
