@@ -4,6 +4,7 @@ with lib;
 
 let
   cfg = config.services.seaweedfs;
+  postgresPrimaryPgbouncerCfg = config.services.postgresPrimaryPgbouncer;
   nodeCfg = nodes.${hostName};
   filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   filerSite = nodeCfg.datacenter or "default";
@@ -40,6 +41,16 @@ let
 
   # Determine if any component is enabled
   isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
+  filerPostgresHost =
+    if postgresPrimaryPgbouncerCfg.enable then
+      postgresPrimaryPgbouncerCfg.listenAddress
+    else
+      cfg.filer.postgres.hostname;
+  filerPostgresPort =
+    if postgresPrimaryPgbouncerCfg.enable then
+      postgresPrimaryPgbouncerCfg.listenPort
+    else
+      cfg.filer.postgres.port;
 
   # Helper to manage tailscale dependency
   tailscaleDependency = optional config.services.tailscale.enable "tailscale-online.service";
@@ -258,6 +269,8 @@ in
   };
 
   config = mkIf isEnabled {
+    services.postgresPrimaryPgbouncer.enable = mkDefault cfg.filer.enable;
+
     assertions = [
       {
         assertion = cfg.filer.enable == filerNodeEnabled;
@@ -280,8 +293,8 @@ in
       content = ''
         [postgres2]
         enabled = true
-        hostname = "${cfg.filer.postgres.hostname}"
-        port = ${toString cfg.filer.postgres.port}
+        hostname = "${filerPostgresHost}"
+        port = ${toString filerPostgresPort}
         username = "${cfg.filer.postgres.username}"
         password = "${config.sops.placeholder.seaweedfs_postgres_password}"
         database = "${cfg.filer.postgres.database}"
@@ -385,8 +398,11 @@ in
     systemd.services.seaweedfs-filer = mkIf cfg.filer.enable {
       description = "SeaweedFS Filer Server";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" "seaweedfs-master.service" ] ++ tailscaleDependency;
-      wants = tailscaleDependency;
+      after = [ "network.target" "seaweedfs-master.service" ]
+        ++ optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service"
+        ++ tailscaleDependency;
+      wants = optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service" ++ tailscaleDependency;
+      requires = optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service";
 
       serviceConfig = {
         Type = "simple";

@@ -1,6 +1,10 @@
 { config, lib, pkgs, ... }:
 
 {
+  imports = [
+    ./postgres-primary-pgbouncer.nix
+  ];
+
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "no";
