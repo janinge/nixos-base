@@ -1,9 +1,10 @@
-{ config, lib, pkgs, nodes, hostName, ... }:
+{ config, lib, pkgs, pkgs-unstable, nodes, hostName, ... }:
 
 with lib;
 
 let
   cfg = config.services.seaweedfs;
+  seaweedfsPkg = pkgs-unstable.seaweedfs;
   pgbouncerCfg = config.services.postgresPrimaryPgbouncer;
   nodeCfg = nodes.${hostName};
   masterNodeEnabled = nodeCfg ? weedMaster && nodeCfg.weedMaster;
@@ -390,7 +391,7 @@ in
         Group = "seaweedfs";
         WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
-          ${pkgs.seaweedfs}/bin/weed master \
+          ${seaweedfsPkg}/bin/weed master \
             -ip=${nodeCfg.serviceIp} \
             -port=${toString cfg.master.port} \
             -volumeSizeLimitMB=${toString cfg.master.volumeSizeLimitMB} \
@@ -417,7 +418,7 @@ in
         Group = "seaweedfs";
         WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
-          ${pkgs.seaweedfs}/bin/weed volume \
+          ${seaweedfsPkg}/bin/weed volume \
             -ip=${nodeCfg.serviceIp} \
             -port=${toString cfg.volume.port} \
             -dir=${cfg.volume.dataDir} \
@@ -447,7 +448,7 @@ in
         Group = "seaweedfs";
         WorkingDirectory = "/var/lib/seaweedfs";
         ExecStart = ''
-          ${pkgs.seaweedfs}/bin/weed filer \
+          ${seaweedfsPkg}/bin/weed filer \
             -ip=${nodeCfg.serviceIp} \
             -port=${toString cfg.filer.port} \
             -master=${concatStringsSep "," masterAddresses} \
@@ -533,7 +534,7 @@ in
         User = "root";
         Group = "root";
         ExecStart = ''
-          ${pkgs.seaweedfs}/bin/weed mount \
+          ${seaweedfsPkg}/bin/weed mount \
             -filer='${concatStringsSep "," orderedFilerAddresses}' \
             -dir=${cfg.mount.mountPoint} \
             -cacheDir=${cfg.mount.cacheDir} \
@@ -557,6 +558,6 @@ in
     # Enable user_allow_other in /etc/fuse.conf if allowOthers is enabled
     programs.fuse.userAllowOther = mkIf (cfg.mount != null && cfg.mount.allowOthers) true;
 
-    environment.systemPackages = [ pkgs.seaweedfs ] ++ optional (cfg.mount != null) pkgs.fuse;
+    environment.systemPackages = [ seaweedfsPkg ] ++ optional (cfg.mount != null) pkgs.fuse;
   };
 }
