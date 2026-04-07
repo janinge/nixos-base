@@ -82,7 +82,11 @@ in
         options = {
           passwordFile = mkOption {
             type = types.str;
-            description = "Path to a file containing the PostgreSQL password for this PgBouncer user.";
+            description = ''
+              Path to a file containing the shared password for this PgBouncer
+              user. PgBouncer uses this password both to authenticate incoming
+              clients and to connect upstream to PostgreSQL as the same user.
+            '';
           };
         };
       }));
@@ -103,7 +107,7 @@ in
       enable = true;
       settings = {
         pgbouncer = {
-          auth_type = "trust";
+          auth_type = "scram-sha-256";
           auth_file = authFilePath;
           listen_addr = cfg.listenAddress;
           listen_port = cfg.listenPort;

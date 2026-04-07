@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./postgres-primary-pgbouncer.nix
+    ./pgbouncer.nix
   ];
 
   time.timeZone = "UTC";

@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.seaweedfs;
-  postgresPrimaryPgbouncerCfg = config.services.postgresPrimaryPgbouncer;
+  pgbouncerCfg = config.services.postgresPrimaryPgbouncer;
   nodeCfg = nodes.${hostName};
   filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   filerSite = nodeCfg.datacenter or "default";
@@ -42,13 +42,13 @@ let
   # Determine if any component is enabled
   isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
   filerPostgresHost =
-    if postgresPrimaryPgbouncerCfg.enable then
-      postgresPrimaryPgbouncerCfg.listenAddress
+    if pgbouncerCfg.enable then
+      pgbouncerCfg.listenAddress
     else
       cfg.filer.postgres.hostname;
   filerPostgresPort =
-    if postgresPrimaryPgbouncerCfg.enable then
-      postgresPrimaryPgbouncerCfg.listenPort
+    if pgbouncerCfg.enable then
+      pgbouncerCfg.listenPort
     else
       cfg.filer.postgres.port;
 
@@ -291,7 +291,7 @@ in
       owner = "root";
       group = "seaweedfs";
       mode = "0440";
-      restartUnits = [ "seaweedfs-filer.service" ];
+      restartUnits = [ "pgbouncer.service" "seaweedfs-filer.service" ];
     };
 
     sops.templates."seaweedfs-filer.toml" = mkIf cfg.filer.enable {
@@ -404,10 +404,10 @@ in
       description = "SeaweedFS Filer Server";
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" "seaweedfs-master.service" ]
-        ++ optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service"
+        ++ optional pgbouncerCfg.enable "pgbouncer.service"
         ++ tailscaleDependency;
-      wants = optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service" ++ tailscaleDependency;
-      requires = optional postgresPrimaryPgbouncerCfg.enable "pgbouncer.service";
+      wants = optional pgbouncerCfg.enable "pgbouncer.service" ++ tailscaleDependency;
+      requires = optional pgbouncerCfg.enable "pgbouncer.service";
 
       serviceConfig = {
         Type = "simple";
