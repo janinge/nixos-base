@@ -286,6 +286,10 @@ in
           entryPoints = {
             web.address = ":80";
             websecure.address = ":443";
+            smtp.address = ":25";
+            submission.address = ":587";
+            smtps.address = ":465";
+            imaps.address = ":993";
             tailnet.address = "${nodeCfg.serviceIp}:8443";
           };
           providers.consulCatalog = {
