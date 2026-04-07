@@ -6,8 +6,9 @@ let
   cfg = config.services.seaweedfs;
   pgbouncerCfg = config.services.postgresPrimaryPgbouncer;
   nodeCfg = nodes.${hostName};
+  masterNodeEnabled = nodeCfg ? weedMaster && nodeCfg.weedMaster;
   filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
-  filerSite = nodeCfg.datacenter or "default";
+  site = nodeCfg.datacenter or "default";
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
   filerNodesWithNames = lib.filter
@@ -76,6 +77,30 @@ in
         type = types.listOf types.str;
         default = [];
         description = "List of other master peers for HA setup";
+      };
+
+      consul = {
+        enable = mkOption {
+          type = types.bool;
+          default = config.services.consul.enable;
+          description = "Register the master in the local Consul agent.";
+        };
+
+        serviceName = mkOption {
+          type = types.str;
+          default = "seaweedfs-master";
+          description = ''
+            Consul service name for master discovery. Consumers can resolve
+            <site>.<service>.service.consul for site-local lookup and
+            <service>.service.consul for global fallback.
+          '';
+        };
+
+        extraTags = mkOption {
+          type = types.listOf types.str;
+          default = [];
+          description = "Additional Consul tags appended to the standard master tags.";
+        };
       };
     };
 
@@ -278,6 +303,13 @@ in
 
     assertions = [
       {
+        assertion = cfg.master.enable == masterNodeEnabled;
+        message = ''
+          SeaweedFS master topology mismatch on ${hostName}: services.seaweedfs.master.enable
+          must match cluster/nodes.nix weedMaster so Consul and Nomad metadata stay aligned.
+        '';
+      }
+      {
         assertion = cfg.filer.enable == filerNodeEnabled;
         message = ''
           SeaweedFS filer topology mismatch on ${hostName}: services.seaweedfs.filer.enable
@@ -429,32 +461,61 @@ in
       };
     };
 
-    environment.etc = mkIf (cfg.filer.enable && cfg.filer.consul.enable && config.services.consul.enable) {
-      "consul.d/seaweedfs-filer.json".text = builtins.toJSON {
-        services = [
-          {
-            name = cfg.filer.consul.serviceName;
-            id = "${cfg.filer.consul.serviceName}-${hostName}";
-            address = nodeCfg.serviceIp;
-            port = cfg.filer.port;
-            tags = unique ([ "seaweedfs" "filer" filerSite ] ++ cfg.filer.consul.extraTags);
-            meta = {
-              site = filerSite;
-              host = hostName;
-            };
-            checks = [
-              {
-                id = "${cfg.filer.consul.serviceName}-${hostName}-tcp";
-                name = "SeaweedFS filer TCP";
-                tcp = "${nodeCfg.serviceIp}:${toString cfg.filer.port}";
-                interval = "10s";
-                timeout = "1s";
-              }
-            ];
-          }
-        ];
-      };
-    };
+    environment.etc = mkMerge [
+      (mkIf (cfg.master.enable && cfg.master.consul.enable && config.services.consul.enable) {
+        "consul.d/seaweedfs-master.json".text = builtins.toJSON {
+          services = [
+            {
+              name = cfg.master.consul.serviceName;
+              id = "${cfg.master.consul.serviceName}-${hostName}";
+              address = nodeCfg.serviceIp;
+              port = cfg.master.port;
+              tags = unique ([ "seaweedfs" "master" site ] ++ cfg.master.consul.extraTags);
+              meta = {
+                site = site;
+                host = hostName;
+              };
+              checks = [
+                {
+                  id = "${cfg.master.consul.serviceName}-${hostName}-tcp";
+                  name = "SeaweedFS master TCP";
+                  tcp = "${nodeCfg.serviceIp}:${toString cfg.master.port}";
+                  interval = "10s";
+                  timeout = "1s";
+                }
+              ];
+            }
+          ];
+        };
+      })
+
+      (mkIf (cfg.filer.enable && cfg.filer.consul.enable && config.services.consul.enable) {
+        "consul.d/seaweedfs-filer.json".text = builtins.toJSON {
+          services = [
+            {
+              name = cfg.filer.consul.serviceName;
+              id = "${cfg.filer.consul.serviceName}-${hostName}";
+              address = nodeCfg.serviceIp;
+              port = cfg.filer.port;
+              tags = unique ([ "seaweedfs" "filer" site ] ++ cfg.filer.consul.extraTags);
+              meta = {
+                site = site;
+                host = hostName;
+              };
+              checks = [
+                {
+                  id = "${cfg.filer.consul.serviceName}-${hostName}-tcp";
+                  name = "SeaweedFS filer TCP";
+                  tcp = "${nodeCfg.serviceIp}:${toString cfg.filer.port}";
+                  interval = "10s";
+                  timeout = "1s";
+                }
+              ];
+            }
+          ];
+        };
+      })
+    ];
 
     # FUSE mount service
     systemd.services.seaweedfs-mount = mkIf (cfg.mount != null) {
