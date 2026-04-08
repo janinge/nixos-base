@@ -357,6 +357,25 @@ in
                   permissionsPolicy = "camera=(), microphone=(), geolocation=()";
                 };
               };
+              stalwart-cors = {
+                headers = {
+                  accessControlAllowOriginList = [
+                    "https://webmail.h00t.works"
+                  ];
+                  accessControlAllowMethods = [
+                    "GET"
+                    "POST"
+                    "OPTIONS"
+                  ];
+                  accessControlAllowHeaders = [
+                    "Authorization"
+                    "Content-Type"
+                    "Accept"
+                  ];
+                  accessControlAllowCredentials = true;
+                  addVaryHeader = true;
+                };
+              };
               authentik = {
                 forwardAuth = {
                   address = "https://auth.h00t.works/outpost.goauthentik.io/auth/traefik";
