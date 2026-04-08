@@ -378,6 +378,11 @@ in
               };
             };
           };
+          tcp.serversTransports = {
+            proxyprotocolv2 = {
+              proxyProtocol.version = 2;
+            };
+          };
         };
       };
     })
