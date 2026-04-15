@@ -361,6 +361,7 @@ in
                 headers = {
                   accessControlAllowOriginList = [
                     "https://webmail.h00t.works"
+                    "https://www.h00tmail.com"
                   ];
                   accessControlAllowMethods = [
                     "GET"
