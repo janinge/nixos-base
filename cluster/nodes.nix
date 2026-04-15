@@ -53,6 +53,18 @@
     publicIf = "enp1s0";
   };
 
+  sto-s2-01 = {
+    datacenter = "sto-hh";
+    hostId = "f0e80462";
+    diskLayout = "ext4-vm-zfs-data";
+    rootDevice = "/dev/vda";
+    dataDevice = "/dev/vdb";
+    routedSubnet = "10.42.23.0/24";
+    serviceIp = "10.42.23.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "enp1s0";
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";

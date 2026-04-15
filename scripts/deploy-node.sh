@@ -19,12 +19,20 @@ echo "Deploying to $HOST_NAME at $TARGET..."
 
 mkdir -p "$KEY_DIR"
 KEY_FILE="$KEY_DIR/ssh_host_ed25519_key"
+INITRD_KEY_FILE="$KEY_DIR/initrd_ssh_host_ed25519_key"
 
 if [ ! -f "$KEY_FILE" ]; then
     echo "Generating new SSH host key for $HOST_NAME..."
     ssh-keygen -t ed25519 -f "$KEY_FILE" -N "" -C "root@$HOST_NAME"
 else
     echo "Using existing SSH host key from $KEY_DIR"
+fi
+
+if [ ! -f "$INITRD_KEY_FILE" ]; then
+    echo "Generating new initrd SSH host key for $HOST_NAME..."
+    ssh-keygen -t ed25519 -f "$INITRD_KEY_FILE" -N "" -C "initrd@$HOST_NAME"
+else
+    echo "Using existing initrd SSH host key from $KEY_DIR"
 fi
 
 echo "----------------------------------------------------------------"
@@ -42,9 +50,13 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$TEMP_DIR/etc/ssh"
+mkdir -p "$TEMP_DIR/etc/secrets/initrd"
 cp "$KEY_FILE" "$TEMP_DIR/etc/ssh/"
 cp "$KEY_FILE.pub" "$TEMP_DIR/etc/ssh/"
+cp "$INITRD_KEY_FILE" "$TEMP_DIR/etc/secrets/initrd/ssh_host_ed25519_key"
+cp "$INITRD_KEY_FILE.pub" "$TEMP_DIR/etc/secrets/initrd/ssh_host_ed25519_key.pub"
 chmod 600 "$TEMP_DIR/etc/ssh/ssh_host_ed25519_key"
+chmod 600 "$TEMP_DIR/etc/secrets/initrd/ssh_host_ed25519_key"
 
 echo "Starting nixos-anywhere..."
 nix run github:nix-community/nixos-anywhere -- \
