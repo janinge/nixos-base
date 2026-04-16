@@ -7,6 +7,7 @@
     serviceIp = "10.42.1.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    kernelModules = [ "kvm-intel" ];
     isRegistry = true;
     isGateway = true;
     weedMaster = true;
@@ -36,6 +37,7 @@
     serviceIp = "10.42.21.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
+    kernelModules = [ "kvm-intel" ];
     isRegistry = true;
     isGateway = true;
     weedMaster = true;
@@ -51,6 +53,7 @@
     serviceIp = "10.42.22.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    kernelModules = [ "kvm-intel" ];
   };
 
   sto-s2-01 = {
@@ -65,6 +68,18 @@
     publicIf = "enp1s0";
   };
 
+  sto-c2-01 = {
+    datacenter = "sto-c2";
+    hostId = "ff6ec336";
+    diskLayout = "ext4-vm";
+    rootDevice = "/dev/vda";
+    routedSubnet = "10.42.24.0/24";
+    serviceIp = "10.42.24.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "enp1s0";
+    kernelModules = [ "kvm-amd" ];
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
@@ -74,6 +89,7 @@
     serviceIp = "10.42.10.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
+    kernelModules = [ "kvm-intel" ];
   };
 
   hh4-nomad = {

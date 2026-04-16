@@ -1,6 +1,7 @@
 { config, lib, pkgs, modulesPath, nodes, hostName, ... }:
 let
-  rootDevice = nodes.${hostName}.rootDevice or "/dev/vda";
+  cfg = nodes.${hostName};
+  rootDevice = cfg.rootDevice or "/dev/vda";
 in
 {
   imports = [
@@ -75,7 +76,8 @@ in
 
   boot.initrd.availableKernelModules = [ "virtio_blk" "virtio_pci" "ext4" "dm_mod" "dm_snapshot" ];
 
-  boot.kernelModules = lib.mkIf (pkgs.stdenv.hostPlatform.isx86_64) [ "kvm-intel" ];
+  boot.kernelModules = lib.mkIf (pkgs.stdenv.hostPlatform.isx86_64)
+    cfg.kernelModules;
 
   boot.kernelParams = [
     "zswap.enabled=1"
