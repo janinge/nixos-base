@@ -62,7 +62,6 @@
   environment.systemPackages = with pkgs; [
     tree htop git vim
     zsh tmux curl wget jq unzip
-    nomad consul
     tailscale
     lzop pv mbuffer lsof
 
