@@ -1,10 +1,13 @@
-{ nodes, hostName, ... }:
+{ nodes, hostName, sharedVolumes, ... }:
 let
   cfg = nodes.${hostName};
 in {
   imports = [
     ../modules/common.nix
     ../modules/tailscale.nix
+    ../modules/nomad.nix
+    ../modules/nomad-kata.nix
+    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -31,6 +34,20 @@ in {
     enable = true;
     externalInterface = cfg.publicIf;
     internalInterfaces = [ "tailscale0" ];
+  };
+
+  cluster.nomad.client = {
+    enable = true;
+    runtime = "kata-containerd";
+    hostVolumes = sharedVolumes;
+  };
+
+  cluster.nomadKata.enable = true;
+
+  services.seaweedfs.mount = {
+    mountPoint = "/mnt/seaweedfs";
+    cacheSizeMB = 4000;
+    allowOthers = true;
   };
 
   nix.settings.trusted-users = [ "janinge" ];

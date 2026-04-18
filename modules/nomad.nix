@@ -2,6 +2,7 @@
 let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
+  isPodmanClient = cfg.client.enable && cfg.client.runtime == "podman";
   hasFiler = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   seaweedMountPoint =
     if config.services.seaweedfs.mount != null then
@@ -45,6 +46,16 @@ in
     client = {
       enable = lib.mkEnableOption "Nomad Client Role";
 
+      runtime = lib.mkOption {
+        type = lib.types.enum [ "podman" "kata-containerd" ];
+        default = "podman";
+        description = ''
+          Container runtime path used by this Nomad client. The default keeps
+          the existing rootless Podman driver behavior; kata-containerd enables
+          a separate OCI path backed by containerd and Kata Containers.
+        '';
+      };
+
       jobSecrets = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
@@ -87,7 +98,7 @@ in
       users.users.nomad = {
         isSystemUser = true;
         group = "nomad";
-        extraGroups = [ "podman" ];
+        extraGroups = lib.optional isPodmanClient "podman";
         home = "/var/lib/nomad";
         description = "Nomad service user";
         linger = true;
@@ -148,6 +159,7 @@ in
 
       services.nomad = {
         enable = true;
+        enableDocker = false;
         extraSettingsPaths = [ config.sops.templates."nomad-secrets.json".path ];
         settings = {
           name = hostName;
@@ -409,8 +421,6 @@ in
 
     # Client specific configuration
     (lib.mkIf cfg.client.enable {
-      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
-
       # Generates sops.secrets for items passed in the list
       sops.secrets = lib.genAttrs cfg.client.jobSecrets (secretName: {
         owner = "nomad";
@@ -425,10 +435,6 @@ in
       ) (lib.filterAttrs (n: v: v.createDir) cfg.client.hostVolumes);
 
       services.nomad.settings = {
-        plugin."nomad-driver-podman" = {
-          config = { };
-        };
-
         client = {
           enabled = true;
           node_class = nodeCfg.datacenter;
@@ -464,6 +470,7 @@ in
             routed_subnet = nodeCfg.routedSubnet;
             datacenter = nodeCfg.datacenter;
             site = nodeCfg.datacenter;
+            container_runtime = cfg.client.runtime;
           } // lib.optionalAttrs hasFiler {
             has_filer = "true";
           } // lib.optionalAttrs (seaweedMountPoint != null) {
@@ -511,6 +518,31 @@ in
         retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
         dns_config = { allow_stale = true; node_ttl = "15s"; };
         autopilot.cleanup_dead_servers = true;
+      };
+
+      virtualisation.docker.enable = lib.mkForce false;
+
+      services.prometheus.exporters.node.enable = true;
+      services.cadvisor = {
+        enable = true;
+        listenAddress = "0.0.0.0";
+      };
+
+      environment.systemPackages = with pkgs; [
+        cni-plugins
+        jq
+      ];
+    })
+
+    # Existing rootless Podman workload path. Kata clients use a separate
+    # containerd driver path so the Podman driver model stays unchanged.
+    (lib.mkIf isPodmanClient {
+      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
+
+      services.nomad.settings = {
+        plugin."nomad-driver-podman" = {
+          config = { };
+        };
       };
 
       virtualisation.podman = {
@@ -622,20 +654,12 @@ in
         };
       };
 
-      services.prometheus.exporters.node.enable = true;
-      services.cadvisor = {
-        enable = true;
-        listenAddress = "0.0.0.0";
-      };
-
       environment.systemPackages = with pkgs; [
         pkgs-unstable.nomad-driver-podman
         passt
-        cni-plugins
         podman
         podman-tui
         dive
-        jq
       ];
     })
   ];
