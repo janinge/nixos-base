@@ -532,51 +532,6 @@ in
         cni-plugins
         jq
       ];
-    })
-
-    # Existing rootless Podman workload path. Kata clients use a separate
-    # containerd driver path so the Podman driver model stays unchanged.
-    (lib.mkIf isPodmanClient {
-      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
-
-      services.nomad.settings = {
-        plugin."nomad-driver-podman" = {
-          config = { };
-        };
-      };
-
-      virtualisation.podman = {
-        enable = true;
-        dockerCompat = false;
-        defaultNetwork.settings.dns_enabled = true;
-      };
-
-      virtualisation.docker.enable = lib.mkForce false;
-
-      # Fix the duplicate ListenStream entries by clearing first
-      systemd.sockets.podman.socketConfig = {
-        ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
-        SocketMode = "0660";
-        SocketGroup = "podman";
-      };
-
-      systemd.services.nomad = {
-        serviceConfig = {
-          User = "nomad";
-          Group = "nomad";
-          SupplementaryGroups = lib.mkForce [ "podman" ];
-          DynamicUser = lib.mkForce false;
-
-          ProtectSystem = "full";
-          ProtectHome = false;
-          PrivateTmp = true;
-          NoNewPrivileges = false;
-
-          # CAP_NET_ADMIN is needed for CNI network creation
-          CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
-          AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" ];
-        };
-      };
 
       systemd.services.nomad-storage-weed-sync = lib.mkIf (seaweedMountPoint != null) {
         description = "Sync Nomad SeaweedFS storage readiness metadata";
@@ -651,6 +606,51 @@ in
           OnUnitActiveSec = "30s";
           AccuracySec = "10s";
           Unit = "nomad-storage-weed-sync.service";
+        };
+      };
+    })
+
+    # Existing rootless Podman workload path. Kata clients use a separate
+    # containerd driver path so the Podman driver model stays unchanged.
+    (lib.mkIf isPodmanClient {
+      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
+
+      services.nomad.settings = {
+        plugin."nomad-driver-podman" = {
+          config = { };
+        };
+      };
+
+      virtualisation.podman = {
+        enable = true;
+        dockerCompat = false;
+        defaultNetwork.settings.dns_enabled = true;
+      };
+
+      virtualisation.docker.enable = lib.mkForce false;
+
+      # Fix the duplicate ListenStream entries by clearing first
+      systemd.sockets.podman.socketConfig = {
+        ListenStream = lib.mkForce [ "" "/run/podman/podman.sock" ];
+        SocketMode = "0660";
+        SocketGroup = "podman";
+      };
+
+      systemd.services.nomad = {
+        serviceConfig = {
+          User = "nomad";
+          Group = "nomad";
+          SupplementaryGroups = lib.mkForce [ "podman" ];
+          DynamicUser = lib.mkForce false;
+
+          ProtectSystem = "full";
+          ProtectHome = false;
+          PrivateTmp = true;
+          NoNewPrivileges = false;
+
+          # CAP_NET_ADMIN is needed for CNI network creation
+          CapabilityBoundingSet = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" "CAP_SYS_ADMIN" ];
+          AmbientCapabilities = [ "CAP_NET_ADMIN" "CAP_NET_BIND_SERVICE" ];
         };
       };
 
