@@ -1,4 +1,4 @@
-{ config, pkgs, lib, pkgs-unstable, nodes, hostName, ... }:
+{ config, pkgs, lib, nodes, hostName, ... }:
 let
   cfg = config.cluster.nomadKata;
   nomadCfg = config.cluster.nomad;
@@ -12,7 +12,7 @@ in
     runtime = lib.mkOption {
       type = lib.types.str;
       default = kataRuntime;
-      description = "containerd runtime name used by Nomad's containerd driver for Kata workloads.";
+      description = "Docker runtime name used by Nomad's Docker driver for Kata workloads.";
     };
   };
 
@@ -23,8 +23,8 @@ in
         message = "cluster.nomadKata.enable requires cluster.nomad.client.enable.";
       }
       {
-        assertion = nomadCfg.client.runtime == "kata-containerd";
-        message = "cluster.nomadKata.enable requires cluster.nomad.client.runtime = \"kata-containerd\".";
+        assertion = nomadCfg.client.runtime == "kata-docker";
+        message = "cluster.nomadKata.enable requires cluster.nomad.client.runtime = \"kata-docker\".";
       }
       {
         assertion = nodeCfg ? kernelModules;
@@ -32,47 +32,39 @@ in
       }
     ];
 
-    # Runtime path: Nomad schedules normal OCI tasks through the external
-    # containerd driver; containerd then starts those tasks with Kata's shim.
-    # This keeps VM lifecycle hidden behind the OCI runtime and avoids a custom
-    # VM launcher, guest image pipeline, or workload transport protocol.
+    # Runtime path: Nomad schedules normal OCI tasks through its built-in Docker
+    # driver; Docker then starts selected tasks with Kata's containerd shim.
     services.nomad = {
       dropPrivileges = false;
-      extraSettingsPlugins = [ pkgs-unstable.nomad-driver-containerd ];
       settings = {
-        plugin."nomad-driver-containerd" = {
+        plugin.docker = {
           config = {
-            enabled = true;
-            containerd_runtime = cfg.runtime;
-            stats_interval = "5s";
+            allow_runtimes = [ "runc" cfg.runtime ];
             allow_privileged = false;
           };
         };
         client.meta = {
           kata = "true";
           kata_runtime = cfg.runtime;
-          container_runtime = "kata-containerd";
+          container_runtime = "kata-docker";
         };
       };
     };
 
-    virtualisation.containerd = {
+    virtualisation.docker = {
       enable = true;
-      settings = {
-        plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata = {
-          runtime_type = cfg.runtime;
-        };
+      extraPackages = [
+        pkgs.kata-runtime
+        pkgs.qemu_kvm
+      ];
+      daemon.settings.runtimes.${cfg.runtime} = {
+        runtimeType = cfg.runtime;
       };
     };
-
-    systemd.services.containerd.path = [
-      pkgs.kata-runtime
-      pkgs.qemu_kvm
-    ];
 
     systemd.services.nomad = {
-      after = [ "containerd.service" ];
-      wants = [ "containerd.service" ];
+      after = [ "docker.service" ];
+      wants = [ "docker.service" ];
       serviceConfig = {
         DynamicUser = lib.mkForce false;
         NoNewPrivileges = false;
@@ -96,9 +88,8 @@ in
 
     environment.systemPackages = [
       pkgs.kata-runtime
-      pkgs.containerd
+      pkgs.docker
       pkgs.qemu_kvm
-      pkgs-unstable.nomad-driver-containerd
     ];
   };
 }

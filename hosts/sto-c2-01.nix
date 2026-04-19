@@ -38,7 +38,7 @@ in {
 
   cluster.nomad.client = {
     enable = true;
-    runtime = "kata-containerd";
+    runtime = "kata-docker";
     hostVolumes = sharedVolumes;
     jobSecrets = [ "gitea.env" ];
   };

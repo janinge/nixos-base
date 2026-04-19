@@ -7,7 +7,7 @@ job "kata-nginx" {
 
     constraint {
       attribute = "${meta.container_runtime}"
-      value     = "kata-containerd"
+      value     = "kata-docker"
     }
 
     network {
@@ -37,10 +37,12 @@ job "kata-nginx" {
     }
 
     task "nginx" {
-      driver = "containerd-driver"
+      driver = "docker"
 
       config {
-        image = "docker.io/library/nginx:alpine"
+        image   = "docker.io/library/nginx:alpine"
+        runtime = "io.containerd.kata.v2"
+        ports   = ["http"]
       }
 
       resources {

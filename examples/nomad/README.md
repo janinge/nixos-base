@@ -9,23 +9,27 @@ The host side is enabled on `sto-c2-01` with:
 ```nix
 cluster.nomad.client = {
   enable = true;
-  runtime = "kata-containerd";
+  runtime = "kata-docker";
   hostVolumes = sharedVolumes;
 };
 
 cluster.nomadKata.enable = true;
 ```
 
-Jobs request this path by using the containerd task driver and constraining to Kata-capable clients:
+Jobs request this path by using the Docker task driver and constraining to Kata-capable clients:
 
 ```hcl
 constraint {
   attribute = "${meta.container_runtime}"
-  value     = "kata-containerd"
+  value     = "kata-docker"
 }
 
 task "app" {
-  driver = "containerd-driver"
+  driver = "docker"
+
+  config {
+    runtime = "io.containerd.kata.v2"
+  }
 }
 ```
 
@@ -33,4 +37,4 @@ Networking still uses Nomad bridge networking. The CNI config is rendered from t
 
 Storage uses the same Nomad host volume declarations as the Podman path. SeaweedFS-backed volumes should continue to constrain on `${meta.storage_weed} == "ready"` so jobs do not land on a node before the FUSE mount is healthy.
 
-The Podman path remains the default for existing clients. Kata clients use `nomad-driver-containerd` with `containerd_runtime = "io.containerd.kata.v2"`; the VM is an OCI runtime implementation detail rather than a separate VM scheduling model.
+The Podman path remains the default for existing clients. Kata clients use Nomad's built-in Docker driver with `runtime = "io.containerd.kata.v2"`; the VM is an OCI runtime implementation detail rather than a separate VM scheduling model.

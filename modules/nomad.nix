@@ -3,6 +3,7 @@ let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
   isPodmanClient = cfg.client.enable && cfg.client.runtime == "podman";
+  isKataDockerClient = cfg.client.enable && cfg.client.runtime == "kata-docker";
   hasFiler = nodeCfg ? weedFiler && nodeCfg.weedFiler;
   seaweedMountPoint =
     if config.services.seaweedfs.mount != null then
@@ -47,12 +48,12 @@ in
       enable = lib.mkEnableOption "Nomad Client Role";
 
       runtime = lib.mkOption {
-        type = lib.types.enum [ "podman" "kata-containerd" ];
+        type = lib.types.enum [ "podman" "kata-docker" ];
         default = "podman";
         description = ''
           Container runtime path used by this Nomad client. The default keeps
-          the existing rootless Podman driver behavior; kata-containerd enables
-          a separate OCI path backed by containerd and Kata Containers.
+          the existing rootless Podman driver behavior; kata-docker enables
+          Nomad's built-in Docker driver with the Kata containerd shim runtime.
         '';
       };
 
@@ -159,7 +160,7 @@ in
 
       services.nomad = {
         enable = true;
-        enableDocker = false;
+        enableDocker = isKataDockerClient;
         extraSettingsPaths = [ config.sops.templates."nomad-secrets.json".path ];
         settings = {
           name = hostName;
@@ -440,7 +441,7 @@ in
           node_class = nodeCfg.datacenter;
           cni_config_dir = "/etc/cni/net.d";
           network_interface = nodeCfg.serviceBridge;
-          options = {
+          options = lib.optionalAttrs (!isKataDockerClient) {
             "driver.denylist" = "docker";
           };
 
@@ -520,7 +521,7 @@ in
         autopilot.cleanup_dead_servers = true;
       };
 
-      virtualisation.docker.enable = lib.mkForce false;
+      virtualisation.docker.enable = lib.mkIf (!isKataDockerClient) (lib.mkForce false);
 
       services.prometheus.exporters.node.enable = true;
       services.cadvisor = {
