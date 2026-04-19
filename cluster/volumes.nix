@@ -19,6 +19,11 @@
     readOnly = false;
     createDir = true;
   };
+  "weed-gitea" = {
+    path = "/mnt/seaweedfs/gitea";
+    readOnly = false;
+    createDir = true;
+  };
   "weed-music" = {
     path = "/mnt/seaweedfs/music";
     readOnly = false;

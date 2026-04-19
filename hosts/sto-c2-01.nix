@@ -40,9 +40,12 @@ in {
     enable = true;
     runtime = "kata-containerd";
     hostVolumes = sharedVolumes;
+    jobSecrets = [ "gitea.env" ];
   };
 
   cluster.nomadKata.enable = true;
+
+  sops.secrets."gitea.env".sopsFile = ../secrets/kata.yaml;
 
   services.seaweedfs.mount = {
     mountPoint = "/mnt/seaweedfs";
