@@ -440,6 +440,8 @@ in
           enabled = true;
           node_class = nodeCfg.datacenter;
           cni_config_dir = "/etc/cni/net.d";
+          bridge_network_name = nodeCfg.serviceBridge;
+          bridge_network_subnet = nodeCfg.routedSubnet;
           network_interface = nodeCfg.serviceBridge;
           options = lib.optionalAttrs (!isKataDockerClient) {
             "driver.denylist" = "docker";
