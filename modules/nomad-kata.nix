@@ -57,8 +57,11 @@ in
         pkgs.kata-runtime
         pkgs.qemu_kvm
       ];
-      daemon.settings.runtimes.${cfg.runtime} = {
-        runtimeType = cfg.runtime;
+      daemon.settings = {
+        dns = [ nodeCfg.serviceIp ];
+        runtimes.${cfg.runtime} = {
+          runtimeType = cfg.runtime;
+        };
       };
     };
 
