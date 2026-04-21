@@ -71,4 +71,10 @@ in {
       allowOthers = true;
     };
   };
+
+  systemd.services.seaweedfs-volume = {
+    requires = [ "var-lib-seaweedfs-volumes.mount" ];
+    after = [ "var-lib-seaweedfs-volumes.mount" ];
+    unitConfig.RequiresMountsFor = "/var/lib/seaweedfs/volumes";
+  };
 }
