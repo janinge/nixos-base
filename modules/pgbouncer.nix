@@ -5,6 +5,12 @@ with lib;
 let
   cfg = config.services.postgresPrimaryPgbouncer;
   authFilePath = "/run/pgbouncer/users.txt";
+  usesLocalCorednsPath =
+    config.services.coredns.enable
+    && builtins.elem "127.0.0.1" config.networking.nameservers;
+  localDnsDependencies =
+    optional config.services.coredns.enable "coredns.service"
+    ++ optional config.services.consul.enable "consul.service";
   renderUserEntry = username: userCfg: ''
     username=${escapeShellArg username}
     password_file=${escapeShellArg (toString userCfg.passwordFile)}
@@ -77,6 +83,36 @@ in
       description = "Maximum lifetime of PgBouncer server connections before reconnecting upstream.";
     };
 
+    serverLoginRetrySeconds = mkOption {
+      type = types.int;
+      default = 5;
+      description = ''
+        Seconds PgBouncer waits before retrying upstream server login after a
+        failure.
+      '';
+    };
+
+    dnsMaxTtlSeconds = mkOption {
+      type = types.int;
+      default = 5;
+      description = "Maximum TTL for cached DNS answers inside PgBouncer.";
+    };
+
+    dnsNxdomainTtlSeconds = mkOption {
+      type = types.int;
+      default = 5;
+      description = "Maximum TTL for cached negative DNS answers inside PgBouncer.";
+    };
+
+    dnsZoneCheckPeriodSeconds = mkOption {
+      type = types.int;
+      default = 5;
+      description = ''
+        Period for PgBouncer SOA checks when built with c-ares, used to detect
+        DNS changes sooner than normal TTL expiry.
+      '';
+    };
+
     users = mkOption {
       type = types.attrsOf (types.submodule ({ ... }: {
         options = {
@@ -109,9 +145,13 @@ in
         pgbouncer = {
           auth_type = "scram-sha-256";
           auth_file = authFilePath;
+          dns_max_ttl = cfg.dnsMaxTtlSeconds;
+          dns_nxdomain_ttl = cfg.dnsNxdomainTtlSeconds;
+          dns_zone_check_period = cfg.dnsZoneCheckPeriodSeconds;
           listen_addr = cfg.listenAddress;
           listen_port = cfg.listenPort;
           pool_mode = cfg.poolMode;
+          server_login_retry = cfg.serverLoginRetrySeconds;
           server_lifetime = cfg.serverLifetimeSeconds;
         };
         databases = {
@@ -134,6 +174,9 @@ ${concatStringsSep "\n" (mapAttrsToList renderUserEntry cfg.users)}
       '';
 
       serviceConfig.PermissionsStartOnly = true;
+    } // mkIf usesLocalCorednsPath {
+      after = localDnsDependencies;
+      wants = localDnsDependencies;
     };
   };
 }
