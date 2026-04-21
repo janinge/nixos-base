@@ -47,10 +47,20 @@ in {
 
   sops.secrets."gitea.env".sopsFile = ../secrets/kata.yaml;
 
-  services.seaweedfs.mount = {
-    mountPoint = "/mnt/seaweedfs";
-    cacheSizeMB = 4000;
-    allowOthers = true;
+  services.seaweedfs = {
+    filer = {
+      enable = true;
+      postgres = {
+        database = "seaweedfs_filer";
+        username = "seaweedfs";
+      };
+    };
+
+    mount = {
+      mountPoint = "/mnt/seaweedfs";
+      cacheSizeMB = 4000;
+      allowOthers = true;
+    };
   };
 
   nix.settings.trusted-users = [ "janinge" ];
