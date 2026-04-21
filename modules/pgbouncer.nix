@@ -160,23 +160,26 @@ in
       };
     };
 
-    systemd.services.pgbouncer = {
-      preStart = ''
-        tmp_auth_file="$(${pkgs.coreutils}/bin/mktemp /run/pgbouncer/users.txt.XXXXXX)"
-        trap '${pkgs.coreutils}/bin/rm -f "$tmp_auth_file"' EXIT
+    systemd.services.pgbouncer = mkMerge [
+      {
+        preStart = ''
+          tmp_auth_file="$(${pkgs.coreutils}/bin/mktemp /run/pgbouncer/users.txt.XXXXXX)"
+          trap '${pkgs.coreutils}/bin/rm -f "$tmp_auth_file"' EXIT
 
-        : > "$tmp_auth_file"
+          : > "$tmp_auth_file"
 ${concatStringsSep "\n" (mapAttrsToList renderUserEntry cfg.users)}
-        ${pkgs.coreutils}/bin/chown ${escapeShellArg config.services.pgbouncer.user}:${escapeShellArg config.services.pgbouncer.group} "$tmp_auth_file"
-        ${pkgs.coreutils}/bin/chmod 0400 "$tmp_auth_file"
-        ${pkgs.coreutils}/bin/mv "$tmp_auth_file" ${escapeShellArg authFilePath}
-        trap - EXIT
-      '';
+          ${pkgs.coreutils}/bin/chown ${escapeShellArg config.services.pgbouncer.user}:${escapeShellArg config.services.pgbouncer.group} "$tmp_auth_file"
+          ${pkgs.coreutils}/bin/chmod 0400 "$tmp_auth_file"
+          ${pkgs.coreutils}/bin/mv "$tmp_auth_file" ${escapeShellArg authFilePath}
+          trap - EXIT
+        '';
 
-      serviceConfig.PermissionsStartOnly = true;
-    } // mkIf usesLocalCorednsPath {
-      after = localDnsDependencies;
-      wants = localDnsDependencies;
-    };
+        serviceConfig.PermissionsStartOnly = true;
+      }
+      (mkIf usesLocalCorednsPath {
+        after = localDnsDependencies;
+        wants = localDnsDependencies;
+      })
+    ];
   };
 }
