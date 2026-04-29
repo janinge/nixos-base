@@ -5,6 +5,7 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/power.nix
+    ../modules/coredns.nix
     ../modules/nomad.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
@@ -14,6 +15,8 @@ in {
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
+  networking.nameservers = [ "127.0.0.1" ];
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   networking.defaultGateway = "192.168.2.1";
 
@@ -34,9 +37,6 @@ in {
     "net.ipv6.conf.all.accept_ra" = 1;
     "net.ipv6.conf.all.accept_ra_rt_info_max_plen" = 64;
   };
-
-  services.resolved.enable = true;
-  services.resolved.fallbackDns = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
 
   cluster.nomad.server.enable = true;
 
@@ -70,5 +70,11 @@ in {
       cacheSizeMB = 2000;
       allowOthers = true;
     };
+  };
+
+  systemd.services.seaweedfs-volume = {
+    requires = [ "var-lib-seaweedfs-volumes.mount" ];
+    after = [ "var-lib-seaweedfs-volumes.mount" ];
+    unitConfig.RequiresMountsFor = "/var/lib/seaweedfs/volumes";
   };
 }

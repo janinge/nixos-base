@@ -13,14 +13,14 @@ in {
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
+  networking.nameservers = [ "127.0.0.1" ];
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   networking.defaultGateway = "185.218.124.1";
   networking.defaultGateway6 = {
     address = "fe80::1";
     interface = cfg.publicIf;
   };
-
-  networking.nameservers = [ "213.136.95.10" "213.136.95.11" "2a02:c207::1:53" ];
 
   networking.interfaces.${cfg.publicIf} = {
     useDHCP = false;
@@ -41,6 +41,7 @@ in {
     enable = true;
     useRoutingFeatures = "both";
     extraSetFlags = [
+      "--accept-dns=false"
       "--advertise-exit-node"
       "--advertise-routes=${cfg.routedSubnet}"
     ];

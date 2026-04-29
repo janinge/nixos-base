@@ -78,6 +78,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     kernelModules = [ "kvm-amd" ];
+    weedFiler = true;
   };
 
   fbv-c2-01 = {

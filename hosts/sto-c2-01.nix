@@ -5,6 +5,7 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/tailscale.nix
+    ../modules/coredns.nix
     ../modules/nomad.nix
     ../modules/nomad-kata.nix
     ../modules/seaweedfs.nix
@@ -13,6 +14,8 @@ in {
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
   networking.useDHCP = false;
+  networking.nameservers = [ "127.0.0.1" ];
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
 
   networking.interfaces.${cfg.publicIf}.useDHCP = true;
 
@@ -25,6 +28,7 @@ in {
     enable = true;
     useRoutingFeatures = "both";
     extraSetFlags = [
+      "--accept-dns=false"
       "--advertise-exit-node"
       "--advertise-routes=${cfg.routedSubnet}"
     ];
@@ -47,10 +51,20 @@ in {
 
   sops.secrets."gitea.env".sopsFile = ../secrets/kata.yaml;
 
-  services.seaweedfs.mount = {
-    mountPoint = "/mnt/seaweedfs";
-    cacheSizeMB = 4000;
-    allowOthers = true;
+  services.seaweedfs = {
+    filer = {
+      enable = true;
+      postgres = {
+        database = "seaweedfs_filer";
+        username = "seaweedfs";
+      };
+    };
+
+    mount = {
+      mountPoint = "/mnt/seaweedfs";
+      cacheSizeMB = 4000;
+      allowOthers = true;
+    };
   };
 
   nix.settings.trusted-users = [ "janinge" ];

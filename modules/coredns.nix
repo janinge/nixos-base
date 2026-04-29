@@ -1,6 +1,14 @@
-{ lib, nodes, hostName, ... }:
+{ config, lib, nodes, hostName, ... }:
 let
   cfg = nodes.${hostName};
+  publicInterfaceIpv4s = map (addr: addr.address) (
+    lib.attrByPath [ "networking" "interfaces" cfg.publicIf "ipv4" "addresses" ] [ ] config
+  );
+  isPrivateIpv4 = ip:
+    lib.hasPrefix "10." ip
+    || lib.hasPrefix "192.168." ip
+    || builtins.match "172\\.(1[6-9]|2[0-9]|3[0-1])\\..*" ip != null;
+  bindAddresses = lib.unique ([ cfg.serviceIp "127.0.0.1" ] ++ lib.filter isPrivateIpv4 publicInterfaceIpv4s);
 
   # Filter nodes for registry role
   registryNodes = lib.filter (n: n.isRegistry or false) (lib.attrValues nodes);
@@ -18,7 +26,7 @@ in
     config = ''
       .:53 {
         # Bind the DNS server to the service IP address for this host and localhost.
-        bind ${cfg.serviceIp} 127.0.0.1
+        bind ${lib.concatStringsSep " " bindAddresses}
 
         # Override for headscale.h00t.works
         template IN A headscale.h00t.works. {
