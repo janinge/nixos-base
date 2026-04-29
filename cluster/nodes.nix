@@ -103,6 +103,5 @@
     isRegistry = true;
     weedMaster = true;
     weedFiler = true;
-    patroni = true;
   };
 }
