@@ -7,7 +7,7 @@ let
   # so the SSH unlock port is reachable without a DHCP server.
   initrdAddresses = lib.attrByPath
     [ "networking" "interfaces" cfg.publicIf "ipv4" "addresses" ] [] config;
-  initrdGateway = config.networking.defaultGateway or null;
+  initrdGateway = (config.networking.defaultGateway or {}).address or null;
 
   initrdUnlockShell = pkgs.writeShellScriptBin "initrd-luks-unlock-shell" ''
     echo "Waiting for LUKS passphrase prompt."
@@ -106,7 +106,7 @@ in
           networkConfig.DHCP = if initrdAddresses == [] then "ipv4" else "no";
           address = map (a: "${a.address}/${toString a.prefixLength}") initrdAddresses;
           routes = lib.optional (initrdGateway != null)
-            { routeConfig.Gateway = initrdGateway; };
+            { Gateway = initrdGateway; };
         };
       };
     };
