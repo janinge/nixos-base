@@ -3,6 +3,12 @@ let
   cfg = nodes.${hostName};
   rootDevice = cfg.rootDevice or "/dev/vda";
 
+  # Static network config for initrd — derived from the host's networking settings
+  # so the SSH unlock port is reachable without a DHCP server.
+  initrdAddresses = lib.attrByPath
+    [ "networking" "interfaces" cfg.publicIf "ipv4" "addresses" ] [] config;
+  initrdGateway = config.networking.defaultGateway or null;
+
   initrdUnlockShell = pkgs.writeShellScriptBin "initrd-luks-unlock-shell" ''
     echo "Waiting for LUKS passphrase prompt."
     echo "Enter the passphrase below; this shell exits when unlock is complete."
@@ -97,7 +103,10 @@ in
         enable = true;
         networks."10-${cfg.publicIf}" = {
           matchConfig.Name = cfg.publicIf;
-          networkConfig.DHCP = "ipv4";
+          networkConfig.DHCP = if initrdAddresses == [] then "ipv4" else "no";
+          address = map (a: "${a.address}/${toString a.prefixLength}") initrdAddresses;
+          routes = lib.optional (initrdGateway != null)
+            { routeConfig.Gateway = initrdGateway; };
         };
       };
     };
