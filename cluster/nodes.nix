@@ -93,6 +93,23 @@
     kernelModules = [ "kvm-intel" ];
   };
 
+  fra-c2-01 = {
+    datacenter = "fra-c2";
+    hostId = "d9f3a15c";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/sda";
+    kernelModules = [ "kvm-intel" ];
+    routedSubnet = "10.42.25.0/24";
+    serviceIp = "10.42.25.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens18";
+    isRegistry = true;
+    isGateway = true;
+    weedMaster = true;
+    weedFiler = true;
+    patroni = true;
+  };
+
   hh4-nomad = {
     datacenter = "bgo-hh";
     hostId = "f2d31c54";
