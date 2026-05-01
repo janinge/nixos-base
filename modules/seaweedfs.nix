@@ -193,7 +193,7 @@ in
 
         connectionMaxOpen = mkOption {
           type = types.int;
-          default = 100;
+          default = 32;
           description = "Maximum open PostgreSQL connections";
         };
       };
@@ -339,6 +339,7 @@ in
         sslmode = "${cfg.filer.postgres.sslmode}"
         connection_max_idle = ${toString cfg.filer.postgres.connectionMaxIdle}
         connection_max_open = ${toString cfg.filer.postgres.connectionMaxOpen}
+        pgbouncer_compatible = ${if pgbouncerCfg.enable then "true" else "false"}
         enableUpsert = false
         createTable = """
           CREATE TABLE IF NOT EXISTS "%s" (

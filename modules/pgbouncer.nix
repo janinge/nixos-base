@@ -77,6 +77,24 @@ in
       description = "PgBouncer pool mode used for local PostgreSQL-primary clients.";
     };
 
+    defaultPoolSize = mkOption {
+      type = types.int;
+      default = 4;
+      description = "Maximum number of pooled upstream PostgreSQL server connections per user/database pair.";
+    };
+
+    maxClientConnections = mkOption {
+      type = types.int;
+      default = 32;
+      description = "Maximum number of client connections PgBouncer accepts.";
+    };
+
+    queryWaitTimeoutSeconds = mkOption {
+      type = types.int;
+      default = 10;
+      description = "Maximum time a client query waits for an available upstream PostgreSQL server connection.";
+    };
+
     serverLifetimeSeconds = mkOption {
       type = types.int;
       default = 60;
@@ -163,6 +181,7 @@ in
         pgbouncer = {
           auth_type = "scram-sha-256";
           auth_file = authFilePath;
+          default_pool_size = cfg.defaultPoolSize;
           dns_max_ttl = cfg.dnsMaxTtlSeconds;
           dns_nxdomain_ttl = cfg.dnsNxdomainTtlSeconds;
           dns_zone_check_period = cfg.dnsZoneCheckPeriodSeconds;
@@ -171,7 +190,9 @@ in
           log_connections = if cfg.logConnections then 1 else 0;
           log_disconnections = if cfg.logDisconnections then 1 else 0;
           log_pooler_errors = if cfg.logPoolerErrors then 1 else 0;
+          max_client_conn = cfg.maxClientConnections;
           pool_mode = cfg.poolMode;
+          query_wait_timeout = cfg.queryWaitTimeoutSeconds;
           server_login_retry = cfg.serverLoginRetrySeconds;
           server_lifetime = cfg.serverLifetimeSeconds;
         };
