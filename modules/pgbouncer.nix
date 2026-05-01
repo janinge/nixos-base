@@ -113,6 +113,24 @@ in
       '';
     };
 
+    logConnections = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether PgBouncer logs every successful client connection.";
+    };
+
+    logDisconnections = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether PgBouncer logs every client disconnection.";
+    };
+
+    logPoolerErrors = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Whether PgBouncer logs pooler errors.";
+    };
+
     users = mkOption {
       type = types.attrsOf (types.submodule ({ ... }: {
         options = {
@@ -150,6 +168,9 @@ in
           dns_zone_check_period = cfg.dnsZoneCheckPeriodSeconds;
           listen_addr = cfg.listenAddress;
           listen_port = cfg.listenPort;
+          log_connections = cfg.logConnections;
+          log_disconnections = cfg.logDisconnections;
+          log_pooler_errors = cfg.logPoolerErrors;
           pool_mode = cfg.poolMode;
           server_login_retry = cfg.serverLoginRetrySeconds;
           server_lifetime = cfg.serverLifetimeSeconds;
