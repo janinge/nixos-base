@@ -168,9 +168,9 @@ in
           dns_zone_check_period = cfg.dnsZoneCheckPeriodSeconds;
           listen_addr = cfg.listenAddress;
           listen_port = cfg.listenPort;
-          log_connections = cfg.logConnections;
-          log_disconnections = cfg.logDisconnections;
-          log_pooler_errors = cfg.logPoolerErrors;
+          log_connections = if cfg.logConnections then 1 else 0;
+          log_disconnections = if cfg.logDisconnections then 1 else 0;
+          log_pooler_errors = if cfg.logPoolerErrors then 1 else 0;
           pool_mode = cfg.poolMode;
           server_login_retry = cfg.serverLoginRetrySeconds;
           server_lifetime = cfg.serverLifetimeSeconds;
