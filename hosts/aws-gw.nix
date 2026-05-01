@@ -21,6 +21,7 @@ in {
     enable = true;
     useRoutingFeatures = "both";
     extraSetFlags = [
+      "--accept-routes"
       "--advertise-exit-node"
       "--advertise-routes=${cfg.routedSubnet}"
     ];
