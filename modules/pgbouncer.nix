@@ -95,6 +95,18 @@ in
       description = "Maximum time a client query waits for an available upstream PostgreSQL server connection.";
     };
 
+    serverResetQuery = mkOption {
+      type = types.str;
+      default = "";
+      description = "Query used to clean a PostgreSQL server connection before reuse.";
+    };
+
+    serverResetQueryAlways = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether PgBouncer runs serverResetQuery in all pooling modes.";
+    };
+
     serverLifetimeSeconds = mkOption {
       type = types.int;
       default = 60;
@@ -195,6 +207,8 @@ in
           query_wait_timeout = cfg.queryWaitTimeoutSeconds;
           server_login_retry = cfg.serverLoginRetrySeconds;
           server_lifetime = cfg.serverLifetimeSeconds;
+          server_reset_query = cfg.serverResetQuery;
+          server_reset_query_always = if cfg.serverResetQueryAlways then 1 else 0;
         };
         databases = {
           "*" = "host=${cfg.upstreamHost} port=${toString cfg.upstreamPort}";
