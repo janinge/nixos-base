@@ -7,7 +7,6 @@ in {
     ../modules/nomad.nix
     ../modules/seaweedfs.nix
     ../modules/coredns.nix
-    ../modules/patroni.nix
   ];
 
   networking.hostName = hostName;
@@ -48,8 +47,6 @@ in {
     ];
   };
 
-  cluster.nomad.server.enable = true;
-
   cluster.nomad.client = {
     enable = true;
     hostVolumes = sharedVolumes // {
@@ -58,13 +55,7 @@ in {
     jobSecrets = [ "authentik.env" ];
   };
 
-  cluster.patroni = {
-    enable = true;
-    extraClientCidrs = [ "192.168.0.0/16" ];
-  };
-
   services.seaweedfs = {
-    master.enable = true;
     filer = {
       enable = true;
       postgres = {

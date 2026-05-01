@@ -38,11 +38,8 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
-    isRegistry = true;
     isGateway = true;
-    weedMaster = true;
     weedFiler = true;
-    patroni = true;
   };
 
   lw-gw = {
