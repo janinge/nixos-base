@@ -106,11 +106,10 @@ in
 
     dnsZoneCheckPeriodSeconds = mkOption {
       type = types.int;
-      default = 0;
+      default = 30;
       description = ''
         Period for PgBouncer SOA checks when built with c-ares, used to detect
-        DNS changes sooner than normal TTL expiry. Set to 0 to disable SOA
-        polling and rely on dnsMaxTtlSeconds.
+        DNS changes sooner than normal TTL expiry.
       '';
     };
 
