@@ -209,6 +209,7 @@ in
           server_lifetime = cfg.serverLifetimeSeconds;
           server_reset_query = cfg.serverResetQuery;
           server_reset_query_always = if cfg.serverResetQueryAlways then 1 else 0;
+          ignore_startup_parameters = "extra_float_digits,prefer_simple_protocol";
         };
         databases = {
           "*" = "host=${cfg.upstreamHost} port=${toString cfg.upstreamPort}";
