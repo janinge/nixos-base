@@ -4,7 +4,7 @@
 
 `kata-nginx.nomad` is the minimal example for running a normal OCI image with VM isolation through Kata Containers.
 
-The host side is enabled on `sto-c2-01` with:
+The host side requires a Nomad client with the Kata Docker runtime enabled:
 
 ```nix
 cluster.nomad.client = {
@@ -33,7 +33,7 @@ task "app" {
 }
 ```
 
-Networking still uses Nomad bridge networking. The CNI config is rendered from the node metadata, so allocations on `sto-c2-01` receive IPs from `10.42.24.0/24` on `cni-nomad0`, matching the existing routed service-subnet model.
+Networking still uses Nomad bridge networking. The CNI config is rendered from the node metadata, so allocations receive IPs from the node's routed service subnet on `cni-nomad0`, matching the existing routed service-subnet model.
 
 Storage uses the same Nomad host volume declarations as the Podman path. SeaweedFS-backed volumes should continue to constrain on `${meta.storage_weed} == "ready"` so jobs do not land on a node before the FUSE mount is healthy.
 
