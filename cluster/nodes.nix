@@ -38,7 +38,6 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
-    isGateway = true;
     weedFiler = true;
   };
 
@@ -104,6 +103,7 @@
     serviceIp = "10.42.25.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
+    isGateway = true;
     weedFiler = true;
   };
 
