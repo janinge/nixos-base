@@ -7,8 +7,8 @@ in {
     ../modules/tailscale.nix
     ../modules/coredns.nix
     ../modules/nomad.nix
+    ../modules/nomad-kata.nix
     ../modules/seaweedfs.nix
-    ../modules/patroni.nix
   ];
 
   networking.hostName = hostName;
@@ -49,26 +49,27 @@ in {
     ];
   };
 
-  cluster.nomad.server.enable = true;
-
   cluster.nomad.client = {
     enable = true;
+    runtime = "kata-docker";
     hostVolumes = sharedVolumes;
   };
 
-  cluster.patroni = {
-    enable = true;
-    extraClientCidrs = [ "192.168.0.0/16" ];
-  };
+  cluster.nomadKata.enable = true;
 
   services.seaweedfs = {
-    master.enable = true;
     filer = {
       enable = true;
       postgres = {
         database = "seaweedfs_filer";
         username = "seaweedfs";
       };
+    };
+
+    mount = {
+      mountPoint = "/mnt/seaweedfs";
+      cacheSizeMB = 4000;
+      allowOthers = true;
     };
   };
 

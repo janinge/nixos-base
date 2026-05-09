@@ -104,11 +104,7 @@
     serviceIp = "10.42.25.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
-    isRegistry = true;
-    isGateway = true;
-    weedMaster = true;
     weedFiler = true;
-    patroni = true;
   };
 
   hh4-nomad = {
