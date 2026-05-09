@@ -161,10 +161,13 @@ in
 
         wants = lib.optional config.services.tailscale.enable "tailscale-online.service";
 
+        unitConfig = {
+          StartLimitIntervalSec = lib.mkForce 0;
+        };
+
         serviceConfig = {
           Restart = lib.mkForce "on-failure";
           RestartSec = lib.mkForce "10s";
-          StartLimitIntervalSec = lib.mkForce 0;
         };
       };
 
@@ -325,14 +328,37 @@ in
               };
             };
           };
-          entryPoints = {
-            web.address = ":80";
-            websecure.address = ":443";
+          entryPoints = let
+            encodedCharacters = {
+              allowEncodedSlash = false;
+              allowEncodedBackSlash = false;
+              allowEncodedNullCharacter = false;
+              allowEncodedSemicolon = false;
+              allowEncodedPercent = false;
+              allowEncodedQuestionMark = false;
+              allowEncodedHash = false;
+            };
+            httpOptions = {
+              sanitizePath = true;
+              inherit encodedCharacters;
+            };
+          in {
+            web = {
+              address = ":80";
+              http = httpOptions;
+            };
+            websecure = {
+              address = ":443";
+              http = httpOptions;
+            };
             smtp.address = ":25";
             submission.address = ":587";
             smtps.address = ":465";
             imaps.address = ":993";
-            tailnet.address = "${nodeCfg.serviceIp}:8443";
+            tailnet = {
+              address = "${nodeCfg.serviceIp}:8443";
+              http = httpOptions;
+            };
           };
           providers.consulCatalog = {
             endpoint.address = "127.0.0.1:8500";
