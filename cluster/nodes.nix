@@ -74,8 +74,12 @@
     serviceIp = "10.42.24.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens3";
-    kernelModules = [ "kvm-amd" ];
+    kernelModules = [];
+    isRegistry = true;
+    isGateway = true;
+    weedMaster = true;
     weedFiler = true;
+    patroni = true;
   };
 
   fbv-c2-01 = {

@@ -7,8 +7,8 @@ keys:
   - &cb_weed age1j9jfsf0aw3fkavmndpr4k6wcm0uyzq64jgerz9gace87u8v6659s4shh97
   - &fbv_c2_01 age1jhz6m6kcqj8f5gfddx5zylhjsuuazg767aalgzss3p49dvj9tpys6kh2km
   - &sto_s2_01 age1l7nswqc7dqzc45rsmaspt6x6sppxuwd450fqnd2fc5vvplvmg3msz8r8m2
-  - &sto_c2_01 age1ukf2xhmd3phvumvyeykvpvdafyw0xgnvc38m59hkunmjqrt6fcxspj6faj
   - &fra_c2_01 age1xuphm46e8ry72fqy4cy5ac9n0ejchr8trql4dlgjpcdgdn7hdp0srg6rrl
+  - &ams_c1_01 age1whhsvuteq2p8wmpt7swft4fn42ztmwp2whwk0w9dsnqsgz2znv0shp2c84
 
 creation_rules:
   # Site specific: hh4
@@ -23,7 +23,6 @@ creation_rules:
     key_groups:
       - age:
           - *janinge
-          - *sto_c2_01
 
   # Shared global secrets
   - path_regex: secrets.yaml$
@@ -37,5 +36,5 @@ creation_rules:
           - *cb_weed
           - *fbv_c2_01
           - *sto_s2_01
-          - *sto_c2_01
           - *fra_c2_01
+          - *ams_c1_01
