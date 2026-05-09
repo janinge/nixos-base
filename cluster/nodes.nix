@@ -65,15 +65,15 @@
     publicIf = "enp1s0";
   };
 
-  sto-c2-01 = {
-    datacenter = "sto-c2";
-    hostId = "ff6ec336";
-    diskLayout = "ext4-vm";
-    rootDevice = "/dev/vda";
+  ams-c1-01 = {
+    datacenter = "ams-lw";
+    hostId = "217942d2";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/sda";
     routedSubnet = "10.42.24.0/24";
     serviceIp = "10.42.24.1";
     serviceBridge = "cni-nomad0";
-    publicIf = "enp1s0";
+    publicIf = "ens3";
     kernelModules = [ "kvm-amd" ];
     weedFiler = true;
   };
