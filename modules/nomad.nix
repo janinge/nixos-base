@@ -286,7 +286,7 @@ in
       };
       sops.templates."traefik-cf.env" = {
         content = ''
-          CF_API_TOKEN=${config.sops.placeholder.cloudflare_api_token}
+          CLOUDFLARE_DNS_API_TOKEN=${config.sops.placeholder.cloudflare_api_token}
           TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL=${config.sops.placeholder.acme_email}
         '';
         owner = "traefik";
