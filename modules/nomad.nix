@@ -72,6 +72,13 @@ in
         example = [ "authentik.env" "postgres.env" ];
       };
 
+      jobSecretsFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "SOPS secrets file to use for all jobSecrets on this node. When null, the host's sops.defaultSopsFile is used.";
+        example = ../secrets/kata.yaml;
+      };
+
       hostVolumes = lib.mkOption {
         type = lib.types.attrsOf (lib.types.submodule {
           options = {
@@ -458,6 +465,8 @@ in
         owner = "nomad";
         group = "nomad";
         mode = "0440";
+      } // lib.optionalAttrs (cfg.client.jobSecretsFile != null) {
+        sopsFile = cfg.client.jobSecretsFile;
       });
 
       # Create directories for host volumes that request it

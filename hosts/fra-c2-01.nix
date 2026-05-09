@@ -53,6 +53,8 @@ in {
     enable = true;
     runtime = "kata-docker";
     hostVolumes = sharedVolumes;
+    jobSecrets = [ "gitea.env" "directus.env" ];
+    jobSecretsFile = ../secrets/kata.yaml;
   };
 
   cluster.nomadKata.enable = true;
