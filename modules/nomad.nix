@@ -432,6 +432,7 @@ in
                 forwardAuth = {
                   address = "https://auth.h00t.works/outpost.goauthentik.io/auth/traefik";
                   trustForwardHeader = true;
+                  maxResponseBodySize = 1048576;
                   authResponseHeaders = [
                     "X-authentik-username"
                     "X-authentik-groups"
