@@ -81,6 +81,19 @@
     patroni = true;
   };
 
+  ams-c1-02 = {
+    datacenter = "ams-lw";
+    hostId = "b8a17c4e";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/vda";
+    routedSubnet = "10.42.26.0/24";
+    serviceIp = "10.42.26.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens3";
+    kernelModules = [];
+    weedFiler = true;
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
