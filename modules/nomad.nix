@@ -31,6 +31,14 @@ let
       sans = [ "*.h00t.works" ];
     }];
   };
+
+  wildcardTlsCf = {
+    certResolver = "cloudflare";
+    domains = [{
+      main = "smbergen.no";
+      sans = [ "*.smbergen.no" ];
+    }];
+  };
 in
 {
   options.cluster.nomad = {
@@ -254,6 +262,10 @@ in
         owner = "traefik";
         restartUnits = [ "traefik.service" ];
       };
+      sops.secrets.cloudflare_api_token = {
+        owner = "traefik";
+        restartUnits = [ "traefik.service" ];
+      };
 
       sops.templates."traefik-aws.env" = {
         content = ''
@@ -265,10 +277,20 @@ in
         '';
         owner = "traefik";
       };
+      sops.templates."traefik-cf.env" = {
+        content = ''
+          CF_API_TOKEN=${config.sops.placeholder.cloudflare_api_token}
+          TRAEFIK_CERTIFICATESRESOLVERS_CLOUDFLARE_ACME_EMAIL=${config.sops.placeholder.acme_email}
+        '';
+        owner = "traefik";
+      };
 
       # Inject credentials into Traefik
       systemd.services.traefik.serviceConfig = {
-        EnvironmentFile = [ config.sops.templates."traefik-aws.env".path ];
+        EnvironmentFile = [
+          config.sops.templates."traefik-aws.env".path
+          config.sops.templates."traefik-cf.env".path
+        ];
       };
 
       services.traefik = {
@@ -314,6 +336,15 @@ in
             storage = "/var/lib/traefik/acme.json";
             dnsChallenge = {
               provider = "route53";
+              propagation = {
+                delayBeforeChecks = "60s";
+              };
+            };
+          };
+          certificatesResolvers.cloudflare.acme = {
+            storage = "/var/lib/traefik/acme-cloudflare.json";
+            dnsChallenge = {
+              provider = "cloudflare";
               propagation = {
                 delayBeforeChecks = "60s";
               };
