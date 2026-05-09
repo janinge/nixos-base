@@ -23,6 +23,7 @@ creation_rules:
     key_groups:
       - age:
           - *janinge
+          - *fra_c2_01
 
   # Shared global secrets
   - path_regex: secrets.yaml$
