@@ -54,11 +54,7 @@ let
 
       if [ "''${1:-}" != "--run" ]; then
         workdir="$(mktemp -d "$workroot/check.XXXXXXXXXX")"
-
-        cleanup_wrapper() {
-          rm -rf "$workdir"
-        }
-        trap cleanup_wrapper EXIT
+        trap 'rm -rf "$workdir"' EXIT
 
         status=0
         timeout --kill-after=1s "''${timeout_seconds}s" "$0" --run "$workdir" "$@" || status=$?
@@ -94,6 +90,7 @@ let
       object_key="$key_prefix/$(hostname)-$$-$(date +%s%N)"
       created=0
 
+      # shellcheck disable=SC2329
       cleanup() {
         if [ "$created" -eq 1 ]; then
           aws --endpoint-url "$endpoint" s3api delete-object \
