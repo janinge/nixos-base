@@ -9,6 +9,7 @@ let
   nodeCfg = nodes.${hostName};
   masterNodeEnabled = nodeCfg ? weedMaster && nodeCfg.weedMaster;
   filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
+  nomadClientEnabled = config.cluster.nomad.client.enable or false;
   site = nodeCfg.datacenter or "default";
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
@@ -41,8 +42,98 @@ let
     else
       discoveredFilerAddresses;
 
+  seaweedS3Health = pkgs.writeShellApplication {
+    name = "seaweed-s3-health";
+    runtimeInputs = with pkgs; [
+      awscli2
+      coreutils
+    ];
+    text = ''
+      timeout_seconds=${toString cfg.s3Health.timeoutSeconds}
+      workroot=/run/seaweed-s3-health
+
+      if [ "''${1:-}" != "--run" ]; then
+        workdir="$(mktemp -d "$workroot/check.XXXXXXXXXX")"
+
+        cleanup_wrapper() {
+          rm -rf "$workdir"
+        }
+        trap cleanup_wrapper EXIT
+
+        status=0
+        timeout --kill-after=1s "''${timeout_seconds}s" "$0" --run "$workdir" "$@" || status=$?
+        exit "$status"
+      fi
+      shift
+      workdir=''${1:?missing workdir}
+      shift
+
+      endpoint=${escapeShellArg cfg.s3Health.endpoint}
+      secret_file=${escapeShellArg config.sops.secrets."seaweed_s3_health.env".path}
+      key_prefix=${escapeShellArg cfg.s3Health.keyPrefix}
+
+      AWS_ACCESS_KEY_ID="''${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY="''${AWS_SECRET_ACCESS_KEY:-}"
+      SEAWEED_S3_HEALTH_BUCKET="''${SEAWEED_S3_HEALTH_BUCKET:-}"
+      AWS_DEFAULT_REGION="''${AWS_DEFAULT_REGION:-us-east-1}"
+
+      # shellcheck disable=SC1090
+      . "$secret_file"
+
+      : "''${AWS_ACCESS_KEY_ID:?AWS_ACCESS_KEY_ID must be set in $secret_file}"
+      : "''${AWS_SECRET_ACCESS_KEY:?AWS_SECRET_ACCESS_KEY must be set in $secret_file}"
+      : "''${SEAWEED_S3_HEALTH_BUCKET:?SEAWEED_S3_HEALTH_BUCKET must be set in $secret_file}"
+
+      export AWS_ACCESS_KEY_ID
+      export AWS_SECRET_ACCESS_KEY
+      export AWS_DEFAULT_REGION
+      export AWS_EC2_METADATA_DISABLED=true
+
+      body_file="$workdir/body"
+      result_file="$workdir/result"
+      object_key="$key_prefix/$(hostname)-$$-$(date +%s%N)"
+      created=0
+
+      cleanup() {
+        if [ "$created" -eq 1 ]; then
+          aws --endpoint-url "$endpoint" s3api delete-object \
+            --bucket "$SEAWEED_S3_HEALTH_BUCKET" \
+            --key "$object_key" \
+            --no-cli-pager >/dev/null 2>&1 || true
+        fi
+        rm -rf "$workdir"
+      }
+      trap cleanup EXIT
+
+      printf 'seaweed-s3-health %s %s\n' "$(hostname)" "$(date --iso-8601=ns)" > "$body_file"
+
+      aws --endpoint-url "$endpoint" s3api put-object \
+        --bucket "$SEAWEED_S3_HEALTH_BUCKET" \
+        --key "$object_key" \
+        --body "$body_file" \
+        --no-cli-pager >/dev/null
+      created=1
+
+      aws --endpoint-url "$endpoint" s3api get-object \
+        --bucket "$SEAWEED_S3_HEALTH_BUCKET" \
+        --key "$object_key" \
+        "$result_file" \
+        --no-cli-pager >/dev/null
+
+      cmp -s "$body_file" "$result_file"
+
+      aws --endpoint-url "$endpoint" s3api delete-object \
+        --bucket "$SEAWEED_S3_HEALTH_BUCKET" \
+        --key "$object_key" \
+        --no-cli-pager >/dev/null
+      created=0
+
+      echo "seaweed-s3-health ok"
+    '';
+  };
+
   # Determine if any component is enabled
-  isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null);
+  isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null) || cfg.s3Health.enable;
   filerPostgresHost =
     if pgbouncerCfg.enable then
       pgbouncerCfg.listenAddress
@@ -292,6 +383,32 @@ in
       default = null;
       description = "FUSE mount configuration";
     };
+
+    s3Health = {
+      enable = mkOption {
+        type = types.bool;
+        default = cfg.filer.enable && nomadClientEnabled;
+        description = "Install a Nomad script-check compatible S3 PUT/GET/DELETE health check for the local SeaweedFS S3 gateway.";
+      };
+
+      endpoint = mkOption {
+        type = types.str;
+        default = "http://127.0.0.1:8333";
+        description = "S3 endpoint checked by seaweed-s3-health.";
+      };
+
+      timeoutSeconds = mkOption {
+        type = types.int;
+        default = 8;
+        description = "Wall-clock timeout for the whole S3 health check script.";
+      };
+
+      keyPrefix = mkOption {
+        type = types.str;
+        default = "nomad-health/seaweed-s3";
+        description = "Object key prefix used for temporary S3 health check objects.";
+      };
+    };
   };
 
   config = mkIf isEnabled {
@@ -317,6 +434,18 @@ in
           must match cluster/nodes.nix weedFiler so Consul and Nomad metadata stay aligned.
         '';
       }
+      {
+        assertion = cfg.s3Health.timeoutSeconds > 0;
+        message = "services.seaweedfs.s3Health.timeoutSeconds must be greater than zero.";
+      }
+      {
+        assertion = !cfg.s3Health.enable || cfg.filer.enable;
+        message = "services.seaweedfs.s3Health.enable requires services.seaweedfs.filer.enable.";
+      }
+      {
+        assertion = !cfg.s3Health.enable || nomadClientEnabled;
+        message = "services.seaweedfs.s3Health.enable requires cluster.nomad.client.enable.";
+      }
     ];
 
     sops.secrets.seaweedfs_postgres_password = mkIf cfg.filer.enable {
@@ -325,6 +454,13 @@ in
       group = "seaweedfs";
       mode = "0440";
       restartUnits = [ "pgbouncer.service" "seaweedfs-filer.service" ];
+    };
+
+    sops.secrets."seaweed_s3_health.env" = mkIf cfg.s3Health.enable {
+      sopsFile = ../secrets/secrets.yaml;
+      owner = "nomad";
+      group = "nomad";
+      mode = "0440";
     };
 
     sops.templates."seaweedfs-filer.toml" = mkIf cfg.filer.enable {
@@ -374,7 +510,9 @@ in
     ++ optionals cfg.filer.enable [
       "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
       "L+ /etc/seaweedfs/filer.toml - - - - ${config.sops.templates."seaweedfs-filer.toml".path}"
-    ] ++ optionals (cfg.mount != null) [
+    ] ++ optional cfg.s3Health.enable
+      "d /run/seaweed-s3-health 0750 nomad nomad 1h -"
+    ++ optionals (cfg.mount != null) [
       "d ${cfg.mount.mountPoint} 0755 root root -"
       "d ${cfg.mount.cacheDir} 0750 root root -"
     ];
@@ -559,6 +697,8 @@ in
     # Enable user_allow_other in /etc/fuse.conf if allowOthers is enabled
     programs.fuse.userAllowOther = mkIf (cfg.mount != null && cfg.mount.allowOthers) true;
 
-    environment.systemPackages = [ seaweedfsPkg ] ++ optional (cfg.mount != null) pkgs.fuse;
+    environment.systemPackages = [ seaweedfsPkg ]
+      ++ optional (cfg.mount != null) pkgs.fuse
+      ++ optional cfg.s3Health.enable seaweedS3Health;
   };
 }
