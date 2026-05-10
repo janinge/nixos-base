@@ -43,13 +43,6 @@ in {
 
   services.seaweedfs = {
     master.enable = true;
-    filer = {
-      enable = true;
-      postgres = {
-        database = "seaweedfs_filer";
-        username = "seaweedfs";
-      };
-    };
   };
 
   services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {

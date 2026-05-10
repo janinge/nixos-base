@@ -60,14 +60,6 @@ in {
   cluster.nomadKata.enable = true;
 
   services.seaweedfs = {
-    filer = {
-      enable = true;
-      postgres = {
-        database = "seaweedfs_filer";
-        username = "seaweedfs";
-      };
-    };
-
     mount = {
       mountPoint = "/mnt/seaweedfs";
       cacheSizeMB = 4000;

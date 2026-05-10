@@ -63,6 +63,14 @@ in {
   };
 
   services.seaweedfs = {
+    filer = {
+      enable = true;
+      postgres = {
+        database = "seaweedfs_filer";
+        username = "seaweedfs";
+      };
+    };
+
     volume = {
       enable = true;
       dataDir = "/var/lib/seaweedfs/volumes";

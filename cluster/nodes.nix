@@ -11,7 +11,6 @@
     isRegistry = true;
     isGateway = true;
     weedMaster = true;
-    weedFiler = true;
     patroni = true;
   };
 
@@ -38,7 +37,6 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
-    weedFiler = true;
   };
 
   lw-gw = {
@@ -91,7 +89,6 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens3";
     kernelModules = [];
-    weedFiler = true;
   };
 
   fbv-c2-01 = {
@@ -104,6 +101,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
     kernelModules = [ "kvm-intel" ];
+    weedFiler = true;
   };
 
   fra-c2-01 = {
@@ -117,7 +115,6 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     isGateway = true;
-    weedFiler = true;
   };
 
   hh4-nomad = {
