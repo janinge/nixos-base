@@ -9,7 +9,6 @@ let
   nodeCfg = nodes.${hostName};
   masterNodeEnabled = nodeCfg ? weedMaster && nodeCfg.weedMaster;
   filerNodeEnabled = nodeCfg ? weedFiler && nodeCfg.weedFiler;
-  nomadClientEnabled = config.cluster.nomad.client.enable or false;
   site = nodeCfg.datacenter or "default";
 
   masterNodes = lib.filter (n: n ? "weedMaster" && n.weedMaster) (lib.attrValues nodes);
@@ -41,6 +40,13 @@ let
       cfg.mount.filerServers
     else
       discoveredFilerAddresses;
+
+  s3Args = [
+    "-ip.bind=${cfg.s3.bindIp}"
+    "-port=${toString cfg.s3.port}"
+    "-filer=${cfg.s3.filer}"
+  ] ++ optional (cfg.s3.domainNames != [])
+    "-domainName=${concatStringsSep "," cfg.s3.domainNames}";
 
   seaweedS3Health = pkgs.writeShellApplication {
     name = "seaweed-s3-health";
@@ -130,7 +136,7 @@ let
   };
 
   # Determine if any component is enabled
-  isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || (cfg.mount != null) || cfg.s3Health.enable;
+  isEnabled = cfg.master.enable || cfg.volume.enable || cfg.filer.enable || cfg.s3.enable || (cfg.mount != null) || cfg.s3Health.enable;
   filerPostgresHost =
     if pgbouncerCfg.enable then
       pgbouncerCfg.listenAddress
@@ -381,16 +387,68 @@ in
       description = "FUSE mount configuration";
     };
 
+    s3 = {
+      enable = mkOption {
+        type = types.bool;
+        default = cfg.filer.enable;
+        description = "Enable a host-native SeaweedFS S3 gateway backed by the local filer.";
+      };
+
+      bindIp = mkOption {
+        type = types.str;
+        default = "0.0.0.0";
+        description = "IP address the S3 gateway binds to.";
+      };
+
+      port = mkOption {
+        type = types.port;
+        default = 8333;
+        description = "HTTP port for the S3 gateway.";
+      };
+
+      filer = mkOption {
+        type = types.str;
+        default = "127.0.0.1:8888";
+        description = "Filer address passed to weed s3.";
+      };
+
+      domainNames = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Optional bucket virtual-host domain suffixes passed as -domainName.";
+      };
+
+      consul = {
+        enable = mkOption {
+          type = types.bool;
+          default = config.services.consul.enable;
+          description = "Register the S3 gateway in the local Consul agent.";
+        };
+
+        serviceName = mkOption {
+          type = types.str;
+          default = "seaweedfs-s3";
+          description = "Consul service name for S3 gateway discovery.";
+        };
+
+        extraTags = mkOption {
+          type = types.listOf types.str;
+          default = [];
+          description = "Additional Consul tags appended to the standard S3 tags.";
+        };
+      };
+    };
+
     s3Health = {
       enable = mkOption {
         type = types.bool;
-        default = cfg.filer.enable && nomadClientEnabled;
-        description = "Install a Nomad script-check compatible S3 PUT/GET/DELETE health check for the local SeaweedFS S3 gateway.";
+        default = cfg.s3.enable;
+        description = "Install a Consul script-check compatible S3 PUT/GET/DELETE health check for the local SeaweedFS S3 gateway.";
       };
 
       endpoint = mkOption {
         type = types.str;
-        default = "http://127.0.0.1:8333";
+        default = "http://127.0.0.1:${toString cfg.s3.port}";
         description = "S3 endpoint checked by seaweed-s3-health.";
       };
 
@@ -436,12 +494,12 @@ in
         message = "services.seaweedfs.s3Health.timeoutSeconds must be greater than zero.";
       }
       {
-        assertion = !cfg.s3Health.enable || cfg.filer.enable;
-        message = "services.seaweedfs.s3Health.enable requires services.seaweedfs.filer.enable.";
+        assertion = !cfg.s3.enable || cfg.filer.enable;
+        message = "services.seaweedfs.s3.enable requires services.seaweedfs.filer.enable.";
       }
       {
-        assertion = !cfg.s3Health.enable || nomadClientEnabled;
-        message = "services.seaweedfs.s3Health.enable requires cluster.nomad.client.enable.";
+        assertion = !cfg.s3Health.enable || cfg.s3.enable;
+        message = "services.seaweedfs.s3Health.enable requires services.seaweedfs.s3.enable.";
       }
     ];
 
@@ -455,8 +513,8 @@ in
 
     sops.secrets."seaweed_s3_health.env" = mkIf cfg.s3Health.enable {
       sopsFile = ../secrets/secrets.yaml;
-      owner = "nomad";
-      group = "nomad";
+      owner = "consul";
+      group = "consul";
       mode = "0440";
     };
 
@@ -508,7 +566,7 @@ in
       "d ${cfg.filer.dataDir} 0750 seaweedfs seaweedfs -"
       "L+ /etc/seaweedfs/filer.toml - - - - ${config.sops.templates."seaweedfs-filer.toml".path}"
     ] ++ optional cfg.s3Health.enable
-      "d /run/seaweed-s3-health 0750 nomad nomad 1h -"
+      "d /run/seaweed-s3-health 0750 consul consul 1h -"
     ++ optionals (cfg.mount != null) [
       "d ${cfg.mount.mountPoint} 0755 root root -"
       "d ${cfg.mount.cacheDir} 0750 root root -"
@@ -598,6 +656,25 @@ in
       };
     };
 
+    # S3 gateway service
+    systemd.services.seaweedfs-s3 = mkIf cfg.s3.enable {
+      description = "SeaweedFS S3 Gateway";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" "seaweedfs-filer.service" ] ++ tailscaleDependency;
+      wants = tailscaleDependency;
+      requires = [ "seaweedfs-filer.service" ];
+
+      serviceConfig = {
+        Type = "simple";
+        User = "seaweedfs";
+        Group = "seaweedfs";
+        WorkingDirectory = "/var/lib/seaweedfs";
+        ExecStart = "${seaweedfsPkg}/bin/weed s3 ${escapeShellArgs s3Args}";
+        Restart = "on-failure";
+        RestartSec = "10s";
+      };
+    };
+
     environment.etc = mkMerge [
       (mkIf (cfg.master.enable && cfg.master.consul.enable && config.services.consul.enable) {
         "consul.d/seaweedfs-master.json".text = builtins.toJSON {
@@ -652,7 +729,44 @@ in
           ];
         };
       })
+
+      (mkIf (cfg.s3.enable && cfg.s3.consul.enable && config.services.consul.enable) {
+        "consul.d/seaweedfs-s3.json".text = builtins.toJSON {
+          services = [
+            {
+              name = cfg.s3.consul.serviceName;
+              id = "${cfg.s3.consul.serviceName}-${hostName}";
+              address = nodeCfg.serviceIp;
+              port = cfg.s3.port;
+              tags = unique ([ "seaweedfs" "s3" site ] ++ cfg.s3.consul.extraTags);
+              meta = {
+                site = site;
+                host = hostName;
+              };
+              checks = [
+                {
+                  id = "${cfg.s3.consul.serviceName}-${hostName}-tcp";
+                  name = "SeaweedFS S3 TCP";
+                  tcp = "${nodeCfg.serviceIp}:${toString cfg.s3.port}";
+                  interval = "10s";
+                  timeout = "1s";
+                }
+              ] ++ optional cfg.s3Health.enable {
+                id = "${cfg.s3.consul.serviceName}-${hostName}-deep";
+                name = "SeaweedFS S3 PUT/GET/DELETE";
+                args = [ "/run/current-system/sw/bin/seaweed-s3-health" ];
+                interval = "30s";
+                timeout = "10s";
+              };
+            }
+          ];
+        };
+      })
     ];
+
+    services.consul.extraConfig = mkIf (cfg.s3Health.enable && config.services.consul.enable) {
+      enable_local_script_checks = true;
+    };
 
     # FUSE mount service
     systemd.services.seaweedfs-mount = mkIf (cfg.mount != null) {

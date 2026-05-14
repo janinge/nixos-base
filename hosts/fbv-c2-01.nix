@@ -88,4 +88,6 @@ in {
       allowOthers = true;
     };
   };
+
+  nix.settings.trusted-users = [ "root" "janinge" ];
 }

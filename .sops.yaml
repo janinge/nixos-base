@@ -9,6 +9,7 @@ keys:
   - &sto_s2_01 age1l7nswqc7dqzc45rsmaspt6x6sppxuwd450fqnd2fc5vvplvmg3msz8r8m2
   - &fra_c2_01 age1xuphm46e8ry72fqy4cy5ac9n0ejchr8trql4dlgjpcdgdn7hdp0srg6rrl
   - &ams_c1_01 age1whhsvuteq2p8wmpt7swft4fn42ztmwp2whwk0w9dsnqsgz2znv0shp2c84
+  - &ams_c1_02 age1lqaag35cf5ykruelqefc3vjm5j902473s2wd4zvg7kxpjyhw2pjsxyckhk
 
 creation_rules:
   # Site specific: hh4
@@ -39,3 +40,5 @@ creation_rules:
           - *sto_s2_01
           - *fra_c2_01
           - *ams_c1_01
+          - *ams_c1_02
+
