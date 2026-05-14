@@ -8,6 +8,9 @@ in {
     ../modules/seaweedfs.nix
   ];
 
+  # EFI-only install
+  boot.loader.grub.device = "nodev";
+
   # Hypervisor specific tuning
   boot.kernelParams = [
     "clocksource=acpi_pm" # Bhyve often struggles with TSC sync; acpi_pm is more stable than HPET
