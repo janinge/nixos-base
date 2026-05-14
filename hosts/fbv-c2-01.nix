@@ -8,8 +8,9 @@ in {
     ../modules/seaweedfs.nix
   ];
 
-  # mkForce needed: disko auto-sets device from the EF02 partition and wins otherwise
-  boot.loader.grub.device = lib.mkForce "nodev";
+  # Override the devices list directly; disko adds /dev/sda via the EF02 partition
+  # and device = "nodev" doesn't clear it — only forcing the list does.
+  boot.loader.grub.devices = lib.mkForce [ "nodev" ];
 
   # Hypervisor specific tuning
   boot.kernelParams = [
