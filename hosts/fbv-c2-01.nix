@@ -8,8 +8,8 @@ in {
     ../modules/seaweedfs.nix
   ];
 
-  # EFI-only install
-  boot.loader.grub.device = "nodev";
+  # mkForce needed: disko auto-sets device from the EF02 partition and wins otherwise
+  boot.loader.grub.device = lib.mkForce "nodev";
 
   # Hypervisor specific tuning
   boot.kernelParams = [
