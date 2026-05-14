@@ -53,6 +53,7 @@ let
     runtimeInputs = with pkgs; [
       awscli2
       coreutils
+      diffutils
     ];
     text = ''
       timeout_seconds=${toString cfg.s3Health.timeoutSeconds}
