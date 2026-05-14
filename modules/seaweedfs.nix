@@ -93,7 +93,7 @@ let
 
       body_file="$workdir/body"
       result_file="$workdir/result"
-      object_key="$key_prefix/$(hostname)-$$-$(date +%s%N)"
+      object_key="$key_prefix/''${HOSTNAME:-$(uname -n)}-$$-$(date +%s%N)"
       created=0
 
       # shellcheck disable=SC2329
@@ -108,7 +108,7 @@ let
       }
       trap cleanup EXIT
 
-      printf 'seaweed-s3-health %s %s\n' "$(hostname)" "$(date --iso-8601=ns)" > "$body_file"
+      printf 'seaweed-s3-health %s %s\n' "''${HOSTNAME:-$(uname -n)}" "$(date --iso-8601=ns)" > "$body_file"
 
       aws --endpoint-url "$endpoint" s3api put-object \
         --bucket "$SEAWEED_S3_HEALTH_BUCKET" \
