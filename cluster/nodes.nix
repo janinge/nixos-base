@@ -87,7 +87,7 @@
     routedSubnet = "10.42.26.0/24";
     serviceIp = "10.42.26.1";
     serviceBridge = "cni-nomad0";
-    publicIf = "ens3";
+    publicIf = "eth0";
     kernelModules = [];
   };
 
