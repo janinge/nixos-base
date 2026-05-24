@@ -7,7 +7,11 @@ let
   nodeCfg = nodes.${hostName};
 
   # Select PostgreSQL package based on version
-  pgPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
+  basePgPackage = pkgs."postgresql_${toString cfg.postgresqlVersion}";
+  pgPackage =
+    if cfg.postgis.enable
+    then basePgPackage.withPackages (ps: [ ps.postgis ])
+    else basePgPackage;
 
   # Find all nodes with Patroni enabled for the cluster
   patroniNodes = lib.filter (n: n ? "patroni" && n.patroni) (lib.attrValues nodes);
@@ -50,6 +54,10 @@ in
         Additional client CIDRs to allow in Patroni-managed pg_hba.conf.
         These entries are added as "host all all ... scram-sha-256" rules.
       '';
+    };
+
+    postgis = {
+      enable = mkEnableOption "PostGIS support for the Patroni PostgreSQL package and cluster";
     };
   };
 

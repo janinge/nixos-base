@@ -39,6 +39,7 @@ in {
   cluster.patroni = {
     enable = true;
     extraClientCidrs = [ "192.168.0.0/16" ];
+    postgis.enable = true;
   };
 
   services.seaweedfs = {
