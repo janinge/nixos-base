@@ -1,4 +1,4 @@
-{ config, lib, nodes, hostName, ... }:
+{ config, lib, nodes, hostName, pkgs, ... }:
 let
   cfg = nodes.${hostName};
   publicInterfaceIpv4s = map (addr: addr.address) (
@@ -19,10 +19,17 @@ let
 
   # Format as space-separated string with port 8600
   consulUpstreams = lib.concatStringsSep " " (map (ip: "${ip}:8600") targetIps);
+
+  corednsPackage = pkgs.coredns.overrideAttrs (old: {
+    # CoreDNS 1.14.3 has failing upstream tests in this nixpkgs build, but keep
+    # the release for its security fixes.
+    doCheck = false;
+  });
 in
 {
   services.coredns = {
     enable = true;
+    package = corednsPackage;
     config = ''
       .:53 {
         # Bind the DNS server to the service IP address for this host and localhost.
