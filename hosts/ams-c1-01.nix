@@ -7,7 +7,6 @@ in {
     ../modules/tailscale.nix
     ../modules/coredns.nix
     ../modules/nomad.nix
-    ../modules/seaweedfs.nix
     ../modules/patroni.nix
   ];
 
@@ -54,21 +53,4 @@ in {
     postgis.enable = true;
   };
 
-  services.seaweedfs = {
-    master.enable = true;
-
-    filer = {
-      enable = true;
-      postgres = {
-        database = "seaweedfs_filer";
-        username = "seaweedfs";
-      };
-    };
-
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 4000;
-      allowOthers = true;
-    };
-  };
 }

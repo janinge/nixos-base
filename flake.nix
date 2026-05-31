@@ -2,13 +2,12 @@
   description = "Homelab cluster: Nomad, Consul, Traefik, Headscale...";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11-small";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05-small";
     disko.url = "github:nix-community/disko";
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, disko, sops-nix, ... }:
+  outputs = { self, nixpkgs, disko, sops-nix, ... }:
   let
     defaultSystem = "x86_64-linux";
     lib = nixpkgs.lib;
@@ -37,10 +36,6 @@
             modules = mkModules nodeCfg ++ [ ./hosts/${fileName} ];
             specialArgs = {
               inherit nodes hostName sharedVolumes;
-              pkgs-unstable = import nixpkgs-unstable {
-                inherit system;
-                config.allowUnfree = true;
-              };
             };
           };
         })

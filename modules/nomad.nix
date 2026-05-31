@@ -1,22 +1,9 @@
-{ config, pkgs, lib, nodes, hostName, pkgs-unstable, ... }:
+{ config, pkgs, lib, nodes, hostName, ... }:
 let
   cfg = config.cluster.nomad;
   nodeCfg = nodes.${hostName};
   isPodmanClient = cfg.client.enable && cfg.client.runtime == "podman";
   isKataDockerClient = cfg.client.enable && cfg.client.runtime == "kata-docker";
-  hasFiler = nodeCfg ? weedFiler && nodeCfg.weedFiler;
-  seaweedMountPoint =
-    if config.services.seaweedfs.mount != null then
-      config.services.seaweedfs.mount.mountPoint
-    else
-      null;
-  seaweedHostVolumePaths =
-    if seaweedMountPoint != null then
-      lib.map (vol: vol.path) (lib.filter
-        (vol: vol.path == seaweedMountPoint || lib.hasPrefix "${seaweedMountPoint}/" vol.path)
-        (lib.attrValues cfg.client.hostVolumes))
-    else
-      [];
 
   # Helper variables for client configuration
   consulServers = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
@@ -102,7 +89,7 @@ in
         description = "Nomad host volumes configuration";
         example = {
           "local-data" = { path = "/var/lib/nomad-vols/data"; };
-          "shared-fs" = { path = "/mnt/seaweedfs"; createDir = false; };
+          "shared-fs" = { path = "/mnt/shared"; createDir = false; };
         };
       };
     };
@@ -206,8 +193,6 @@ in
           node_meta = {
             site = nodeCfg.datacenter;
             host = hostName;
-          } // lib.optionalAttrs hasFiler {
-            has_filer = "true";
           };
         };
       };
@@ -541,13 +526,6 @@ in
             datacenter = nodeCfg.datacenter;
             site = nodeCfg.datacenter;
             container_runtime = cfg.client.runtime;
-          } // lib.optionalAttrs hasFiler {
-            has_filer = "true";
-          } // lib.optionalAttrs (seaweedMountPoint != null) {
-            # Seaweed-backed jobs should constrain on ${meta.storage_weed} == "ready".
-            # The dynamic sync unit clears its override when storage is unhealthy so
-            # this static default becomes visible again.
-            storage_weed = "not_ready";
           };
         };
 
@@ -602,88 +580,12 @@ in
         cni-plugins
         jq
       ];
-
-      systemd.services.nomad-storage-weed-sync = lib.mkIf (seaweedMountPoint != null) {
-        description = "Sync Nomad SeaweedFS storage readiness metadata";
-        after = [ "nomad.service" ] ++ lib.optional (config.services.seaweedfs.mount != null) "seaweedfs-mount.service";
-        wants = [ "nomad.service" ];
-        path = [
-          config.services.nomad.package
-          pkgs.coreutils
-          pkgs.util-linux
-          pkgs.jq
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = pkgs.writeShellScript "nomad-storage-weed-sync" ''
-            set -euo pipefail
-
-            mount_point=${lib.escapeShellArg seaweedMountPoint}
-            nomad_addr=${lib.escapeShellArg "http://${nodeCfg.serviceIp}:4646"}
-            seaweed_volume_paths=(
-            ${lib.concatMapStringsSep "\n" (path: "  ${lib.escapeShellArg path}") seaweedHostVolumePaths}
-            )
-            metadata_json=""
-
-            healthy=1
-
-            if ! mountpoint -q "$mount_point"; then
-              healthy=0
-            elif ! timeout 5s stat "$mount_point/." >/dev/null; then
-              healthy=0
-            else
-              for volume_path in "''${seaweed_volume_paths[@]}"; do
-                if ! timeout 5s stat "$volume_path" >/dev/null; then
-                  healthy=0
-                  break
-                fi
-              done
-            fi
-
-            # During rebuilds the timer can fire before Nomad is listening even though
-            # systemd has already started the unit, so tolerate a short API startup race.
-            for _attempt in $(seq 1 10); do
-              if metadata_json="$(nomad node meta read -address="$nomad_addr" -json 2>/dev/null)"; then
-                break
-              fi
-              sleep 2
-            done
-
-            if [ -z "$metadata_json" ]; then
-              echo "Nomad client API at $nomad_addr is not ready yet; deferring metadata sync"
-              exit 0
-            fi
-
-            effective_value="$(printf '%s\n' "$metadata_json" | jq -r '.Meta.storage_weed // empty')"
-            dynamic_value="$(printf '%s\n' "$metadata_json" | jq -r 'if (.Dynamic | has("storage_weed")) then (.Dynamic.storage_weed // "__NULL__") else "__MISSING__" end')"
-
-            if [ "$healthy" -eq 1 ]; then
-              if [ "$effective_value" != "ready" ]; then
-                nomad node meta apply -address="$nomad_addr" storage_weed=ready
-              fi
-            elif [ "$dynamic_value" != "__MISSING__" ] && [ "$dynamic_value" != "__NULL__" ]; then
-              nomad node meta apply -address="$nomad_addr" -unset storage_weed
-            fi
-          '';
-        };
-      };
-
-      systemd.timers.nomad-storage-weed-sync = lib.mkIf (seaweedMountPoint != null) {
-        description = "Periodically refresh Nomad SeaweedFS storage readiness metadata";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnBootSec = "90s";
-          OnUnitActiveSec = "30s";
-          AccuracySec = "10s";
-          Unit = "nomad-storage-weed-sync.service";
-        };
-      };
     })
 
     # Existing rootless Podman workload path. Kata clients use a separate
     # containerd driver path so the Podman driver model stays unchanged.
     (lib.mkIf isPodmanClient {
-      services.nomad.extraSettingsPlugins = [ pkgs-unstable.nomad-driver-podman ];
+      services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 
       services.nomad.settings = {
         plugin."nomad-driver-podman" = {
@@ -725,7 +627,7 @@ in
       };
 
       environment.systemPackages = with pkgs; [
-        pkgs-unstable.nomad-driver-podman
+        nomad-driver-podman
         passt
         podman
         podman-tui

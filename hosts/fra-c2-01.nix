@@ -8,7 +8,6 @@ in {
     ../modules/coredns.nix
     ../modules/nomad.nix
     ../modules/nomad-kata.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -58,14 +57,6 @@ in {
   };
 
   cluster.nomadKata.enable = true;
-
-  services.seaweedfs = {
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 4000;
-      allowOthers = true;
-    };
-  };
 
   networking.nat = {
     enable = true;

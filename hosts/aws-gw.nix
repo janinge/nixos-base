@@ -4,7 +4,6 @@ let
 in {
   imports = [
     ../modules/common.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -25,21 +24,6 @@ in {
       "--advertise-exit-node"
       "--advertise-routes=${cfg.routedSubnet}"
     ];
-  };
-
-  services.seaweedfs = {
-    volume = {
-      enable = true;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      rack = "sc1";
-      maxVolumes = 8;
-    };
-  };
-
-  fileSystems."/var/lib/seaweedfs/volumes" = {
-    device = "/dev/nvme1n1";
-    fsType = "ext4";
-    options = [ "defaults" "nofail" ];
   };
 
   networking = {

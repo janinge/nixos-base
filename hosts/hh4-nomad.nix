@@ -9,7 +9,6 @@ in {
     ../modules/nomad.nix
     ../modules/fruit-server.nix
     ../modules/sound-server.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -48,33 +47,4 @@ in {
     jobSecrets = [ "authentik.env" ];
   };
 
-  services.seaweedfs = {
-    master.enable = true;
-    filer = {
-      enable = true;
-      postgres = {
-        database = "seaweedfs_filer";
-        username = "seaweedfs";
-      };
-    };
-
-    volume = {
-      enable = true;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      rack = "nvme1";
-      maxVolumes = 40;
-    };
-
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 2000;
-      allowOthers = true;
-    };
-  };
-
-  systemd.services.seaweedfs-volume = {
-    requires = [ "var-lib-seaweedfs-volumes.mount" ];
-    after = [ "var-lib-seaweedfs-volumes.mount" ];
-    unitConfig.RequiresMountsFor = "/var/lib/seaweedfs/volumes";
-  };
 }

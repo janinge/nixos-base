@@ -8,7 +8,6 @@ in {
     ../modules/tailscale.nix
     ../modules/coredns.nix
     ../modules/nomad.nix
-    ../modules/seaweedfs.nix
     ../modules/patroni.nix
   ];
 
@@ -40,25 +39,6 @@ in {
     enable = true;
     extraClientCidrs = [ "192.168.0.0/16" ];
     postgis.enable = true;
-  };
-
-  services.seaweedfs = {
-    master.enable = true;
-  };
-
-  services.traefik.dynamicConfigOptions.http.routers.seaweedfs = {
-    entryPoints = [ "tailnet" ];
-    service = "seaweedfs";
-    rule = "Host(`seaweedfs.h00t.works`)";
-    tls = { certResolver = "letsencrypt"; };
-  };
-
-  services.traefik.dynamicConfigOptions.http.services.seaweedfs = {
-    loadBalancer = {
-      servers = [
-        { url = "http://${cfg.serviceIp}:9333"; }
-      ];
-    };
   };
 
   networking = {

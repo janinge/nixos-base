@@ -132,16 +132,6 @@ in
             mountpoint = "/nix";
           };
 
-          "seaweedfs" = {
-            type = "zfs_fs";
-            options.mountpoint = "none";
-          };
-
-          "seaweedfs/volumes" = {
-            type = "zfs_fs";
-            options.mountpoint = "legacy";
-            mountpoint = "/var/lib/seaweedfs/volumes";
-          };
         };
       };
     };
@@ -151,11 +141,6 @@ in
     device = "dpool/nix";
     fsType = "zfs";
     neededForBoot = true;
-  };
-
-  fileSystems."/var/lib/seaweedfs/volumes" = {
-    device = "dpool/seaweedfs/volumes";
-    fsType = "zfs";
   };
 
   boot.initrd = {

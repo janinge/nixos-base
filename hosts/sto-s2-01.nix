@@ -4,7 +4,6 @@ let
 in {
   imports = [
     ../modules/common.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -26,21 +25,6 @@ in {
       "--advertise-exit-node"
       "--advertise-routes=${cfg.routedSubnet}"
     ];
-  };
-
-  services.seaweedfs = {
-    volume = {
-      enable = true;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      maxVolumes = 100;
-      rack = "zfs1";
-    };
-  };
-
-  systemd.services.seaweedfs-volume = {
-    requires = [ "var-lib-seaweedfs-volumes.mount" ];
-    after = [ "var-lib-seaweedfs-volumes.mount" ];
-    unitConfig.RequiresMountsFor = "/var/lib/seaweedfs/volumes";
   };
 
   networking = {

@@ -10,7 +10,6 @@
     kernelModules = [ "kvm-intel" ];
     isRegistry = true;
     isGateway = true;
-    weedMaster = true;
     patroni = true;
   };
 
@@ -74,8 +73,6 @@
     kernelModules = [];
     isRegistry = true;
     isGateway = true;
-    weedMaster = true;
-    weedFiler = true;
     patroni = true;
   };
 
@@ -101,7 +98,6 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
     kernelModules = [ "kvm-intel" ];
-    weedFiler = true;
   };
 
   fra-c2-01 = {
@@ -126,7 +122,5 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     isRegistry = true;
-    weedMaster = true;
-    weedFiler = true;
   };
 }

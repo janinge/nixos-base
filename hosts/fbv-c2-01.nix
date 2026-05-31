@@ -5,7 +5,6 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/nomad.nix
-    ../modules/seaweedfs.nix
   ];
 
   # Override the devices list directly; disko adds /dev/sda via the EF02 partition
@@ -64,29 +63,6 @@ in {
       # Node-specific volumes here, if any
     };
     jobSecrets = [ "authentik.env" ];
-  };
-
-  services.seaweedfs = {
-    filer = {
-      enable = true;
-      postgres = {
-        database = "seaweedfs_filer";
-        username = "seaweedfs";
-      };
-    };
-
-    volume = {
-      enable = true;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      rack = "bhyve1";
-      maxVolumes = 20;
-    };
-
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 4000;
-      allowOthers = true;
-    };
   };
 
   nix.settings.trusted-users = [ "root" "janinge" ];

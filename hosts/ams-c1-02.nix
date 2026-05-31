@@ -7,7 +7,6 @@ in {
     ../modules/tailscale.nix
     ../modules/coredns.nix
     ../modules/nomad.nix
-    ../modules/seaweedfs.nix
   ];
 
   networking.hostName = hostName;
@@ -61,11 +60,4 @@ in {
     hostVolumes = sharedVolumes;
   };
 
-  services.seaweedfs = {
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 4000;
-      allowOthers = true;
-    };
-  };
 }

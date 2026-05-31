@@ -6,32 +6,4 @@
     readOnly = false;
     createDir = true;
   };
-  # These local placeholders let Nomad start before the SeaweedFS mount exists.
-  # Jobs using them must constrain on ${meta.storage_weed} == "ready"; otherwise
-  # they can land on the placeholder directories and write locally, which is unsupported.
-  "weed-stalwart" = {
-    path = "/mnt/seaweedfs/stalwart";
-    readOnly = false;
-    createDir = true;
-  };
-  "weed-authentik" = {
-    path = "/mnt/seaweedfs/authentik";
-    readOnly = false;
-    createDir = true;
-  };
-  "weed-gitea" = {
-    path = "/mnt/seaweedfs/gitea";
-    readOnly = false;
-    createDir = true;
-  };
-  "weed-music" = {
-    path = "/mnt/seaweedfs/music";
-    readOnly = false;
-    createDir = true;
-  };
-  "weed-p2p" = {
-    path = "/mnt/seaweedfs/p2p";
-    readOnly = false;
-    createDir = true;
-  };
 }

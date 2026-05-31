@@ -5,7 +5,6 @@ in {
   imports = [
     ../modules/common.nix
     ../modules/nomad.nix
-    ../modules/seaweedfs.nix
     ../modules/coredns.nix
   ];
 
@@ -53,21 +52,6 @@ in {
       # Node-specific volumes here, if any
     };
     jobSecrets = [ "authentik.env" ];
-  };
-
-  services.seaweedfs = {
-    volume = {
-      enable = true;
-      dataDir = "/var/lib/seaweedfs/volumes";
-      rack = "qemu1";
-      maxVolumes = 20;
-    };
-
-    mount = {
-      mountPoint = "/mnt/seaweedfs";
-      cacheSizeMB = 2000;
-      allowOthers = true;
-    };
   };
 
   networking = {

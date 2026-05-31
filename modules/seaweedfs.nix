@@ -1,10 +1,10 @@
-{ config, lib, pkgs, pkgs-unstable, nodes, hostName, ... }:
+{ config, lib, pkgs, nodes, hostName, ... }:
 
 with lib;
 
 let
   cfg = config.services.seaweedfs;
-  seaweedfsPkg = pkgs-unstable.seaweedfs;
+  seaweedfsPkg = pkgs.seaweedfs;
   pgbouncerCfg = config.services.postgresPrimaryPgbouncer;
   nodeCfg = nodes.${hostName};
   masterNodeEnabled = nodeCfg ? weedMaster && nodeCfg.weedMaster;
