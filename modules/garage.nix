@@ -6,17 +6,28 @@ let
   enabled = cfg.enable or false;
   s3Port = 3900;
   garageNodes = lib.filterAttrs (_: node: node.garage.enable or false) nodes;
+  garagePeer = node: "${node.garage.nodeId}@${node.serviceIp}:3901";
+  bootstrapPeers = lib.mapAttrsToList (_: garagePeer)
+    (lib.filterAttrs (name: node: name != hostName) garageNodes);
   layoutNodes = lib.mapAttrs
     (name: node: {
       zone = node.garage.zone or node.datacenter;
       capacity = node.garage.capacity;
-      rpcPublicAddr = "${node.serviceIp}:3901";
+      nodeId = node.garage.nodeId;
+      rpcPublicAddr = garagePeer node;
       serviceIp = node.serviceIp;
     })
     garageNodes;
 in
 {
   config = lib.mkIf enabled {
+    assertions = [
+      {
+        assertion = lib.all (node: node.garage ? nodeId) (lib.attrValues garageNodes);
+        message = "All enabled Garage nodes must define garage.nodeId so bootstrap_peers can be generated declaratively.";
+      }
+    ];
+
     users.groups.garage = {};
     users.users.garage = {
       isSystemUser = true;
@@ -77,6 +88,7 @@ in
 
         rpc_bind_addr = "${nodeCfg.serviceIp}:3901";
         rpc_public_addr = "${nodeCfg.serviceIp}:3901";
+        bootstrap_peers = bootstrapPeers;
 
         s3_api = {
           s3_region = "garage";

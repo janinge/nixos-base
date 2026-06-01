@@ -24,10 +24,6 @@
 
     system = "aarch64-linux";
     nixpkgs.hostPlatform = "aarch64-linux";
-    garage = {
-      enable = true;
-      capacity = "100G";
-    };
   };
 
   cb-weed = {
@@ -42,7 +38,8 @@
     kernelModules = [ "kvm-intel" ];
     garage = {
       enable = true;
-      capacity = "100G";
+      capacity = "800G";
+      nodeId = "a8a8bbc6536dbffa98871c74413a26079f83397a55dc1761481e21c440248e8f";
     };
   };
 
@@ -69,7 +66,8 @@
     publicIf = "enp1s0";
     garage = {
       enable = true;
-      capacity = "500G";
+      capacity = "2560G";
+      nodeId = "e9c566745ca3b22739f6b356d6664a2ed6870eb80b77338bd74d9608eca79a7a";
     };
   };
 
@@ -112,7 +110,8 @@
     kernelModules = [ "kvm-intel" ];
     garage = {
       enable = true;
-      capacity = "100G";
+      capacity = "160G";
+      nodeId = "07d495a05f058241073783a50396c080bbef991966fb9a8a02f8194cf4c61e1b";
     };
   };
 
@@ -140,7 +139,8 @@
     isRegistry = true;
     garage = {
       enable = true;
-      capacity = "200G";
+      capacity = "1024G";
+      nodeId = "3464e2c9dd0b19075d04f4e4775441419f4a4865d3d2db95d9cdaed56cdac93e";
     };
   };
 }

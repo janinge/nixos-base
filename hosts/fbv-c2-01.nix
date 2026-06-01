@@ -45,7 +45,7 @@ in {
   };
 
   services.resolved.enable = true;
-  services.resolved.fallbackDns = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
+  services.resolved.settings.Resolve.FallbackDNS = [ "10.42.1.1" "45.90.28.186" "45.90.30.186" ];
 
   services.tailscale = {
     enable = true;
