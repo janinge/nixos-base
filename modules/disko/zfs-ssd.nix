@@ -182,7 +182,10 @@
 
   boot.supportedFilesystems = [ "zfs" ];
 
-  boot.zfs.devNodes = "/dev/disk/by-id/";
+  boot.zfs = {
+    devNodes = "/dev/disk/by-id/";
+    forceImportRoot = false;
+  };
 
   boot.kernelParams = [
     "zfs_arc_max=4294967296"
