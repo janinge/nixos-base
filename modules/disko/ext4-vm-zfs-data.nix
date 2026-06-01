@@ -132,6 +132,11 @@ in
             mountpoint = "/nix";
           };
 
+          "garage" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/var/lib/garage";
+          };
         };
       };
     };
@@ -141,6 +146,12 @@ in
     device = "dpool/nix";
     fsType = "zfs";
     neededForBoot = true;
+  };
+
+  fileSystems."/var/lib/garage" = {
+    device = "dpool/garage";
+    fsType = "zfs";
+    options = [ "nofail" ];
   };
 
   boot.initrd = {

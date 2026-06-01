@@ -129,6 +129,12 @@
             mountpoint = "/home";
           };
 
+          "data/garage" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/var/lib/garage";
+          };
+
           "reserved" = {
             type = "zfs_fs";
             options.mountpoint = "none";
@@ -166,6 +172,12 @@
   fileSystems."/home" = {
     device = "rpool/data/home";
     fsType = "zfs";
+  };
+
+  fileSystems."/var/lib/garage" = {
+    device = "rpool/data/garage";
+    fsType = "zfs";
+    options = [ "nofail" ];
   };
 
   boot.supportedFilesystems = [ "zfs" ];

@@ -16,6 +16,12 @@ in {
     { address = cfg.serviceIp; prefixLength = 24; }
   ];
 
+  fileSystems."/var/lib/garage" = {
+    device = "/dev/nvme1n1";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
+  };
+
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "both";

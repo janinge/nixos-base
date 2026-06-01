@@ -20,6 +20,7 @@
       disko.nixosModules.disko
       sops-nix.nixosModules.sops
       ./modules/common.nix
+      ./modules/garage.nix
       ./modules/disko/${node.diskLayout}.nix
     ];
 

@@ -24,6 +24,10 @@
 
     system = "aarch64-linux";
     nixpkgs.hostPlatform = "aarch64-linux";
+    garage = {
+      enable = true;
+      capacity = "100G";
+    };
   };
 
   cb-weed = {
@@ -36,6 +40,10 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
+    garage = {
+      enable = true;
+      capacity = "100G";
+    };
   };
 
   lw-gw = {
@@ -59,6 +67,10 @@
     serviceIp = "10.42.23.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    garage = {
+      enable = true;
+      capacity = "500G";
+    };
   };
 
   ams-c1-01 = {
@@ -98,6 +110,10 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
     kernelModules = [ "kvm-intel" ];
+    garage = {
+      enable = true;
+      capacity = "100G";
+    };
   };
 
   fra-c2-01 = {
@@ -122,5 +138,9 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     isRegistry = true;
+    garage = {
+      enable = true;
+      capacity = "200G";
+    };
   };
 }
