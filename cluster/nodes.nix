@@ -110,6 +110,18 @@
     kernelModules = [];
   };
 
+  ams-c2-03 = {
+    datacenter = "ams-do";
+    hostId = "dac39e60";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/vda";
+    routedSubnet = "10.42.28.0/24";
+    serviceIp = "10.42.28.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "eth0";
+    kernelModules = [];
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
