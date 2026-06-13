@@ -87,12 +87,24 @@
   };
 
   ams-c1-02 = {
-    datacenter = "ams-lw";
+    datacenter = "ams-do";
     hostId = "b8a17c4e";
     diskLayout = "ext4-luks-vm";
     rootDevice = "/dev/vda";
     routedSubnet = "10.42.26.0/24";
     serviceIp = "10.42.26.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "eth0";
+    kernelModules = [];
+  };
+
+  ams-c2-02 = {
+    datacenter = "ams-do";
+    hostId = "c9b28d5f";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/vda";
+    routedSubnet = "10.42.27.0/24";
+    serviceIp = "10.42.27.1";
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
