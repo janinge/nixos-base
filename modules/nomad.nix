@@ -52,6 +52,18 @@ in
         '';
       };
 
+      snat = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Masquerade job egress to the host's identity via the CNI bridge
+          (ipMasq). When false, job traffic keeps its routed-subnet source IP
+          across the tailnet so it can be matched by egress policy / Headscale
+          ACLs; Internet egress is still NAT'd via the public interface. Set
+          false on nodes running untrusted workloads.
+        '';
+      };
+
       jobSecrets = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
@@ -547,7 +559,7 @@ in
           {
             type = "bridge";
             bridge = nodeCfg.serviceBridge;
-            ipMasq = true;
+            ipMasq = cfg.client.snat;
             ipam = {
               type = "host-local";
               subnet = nodeCfg.routedSubnet;
@@ -561,6 +573,16 @@ in
           }
         ];
       };
+
+      # With SNAT disabled the CNI bridge no longer masquerades job egress, so
+      # job traffic to the public Internet would leave with an unroutable
+      # routed-subnet source. networking.nat only masquerades traffic exiting
+      # the externalInterface (the public NIC), so adding the service bridge
+      # here restores Internet egress while leaving tailnet (tailscale0)
+      # traffic un-NATed — preserving job source IPs across the mesh. Relies on
+      # the host having networking.nat.{enable,externalInterface} set.
+      networking.nat.internalInterfaces =
+        lib.mkIf (!cfg.client.snat) [ nodeCfg.serviceBridge ];
 
       services.consul.extraConfig = {
         retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;

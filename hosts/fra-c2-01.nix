@@ -54,9 +54,26 @@ in {
     hostVolumes = sharedVolumes;
     jobSecrets = [ "gitea.env" "directus.env" ];
     jobSecretsFile = ../secrets/kata.yaml;
+    # Untrusted workloads: don't launder job egress as the host identity.
+    snat = false;
   };
 
   cluster.nomadKata.enable = true;
+
+  # Default-deny network policy for untrusted Kata jobs: Internet-only egress,
+  # plus an explicit allowlist of internal endpoints and host ports.
+  cluster.nomadKata.netPolicy = {
+    enable = true;
+    # Allow DNS to the node's CoreDNS; everything else bridge->host is dropped
+    # (closes Nomad 4646, cadvisor, node_exporter, SSH from untrusted jobs).
+    hostAllowPorts = [ 53 ];
+    # TODO: populate with the internal endpoints directus/gitea actually need
+    # (e.g. Postgres/PgBouncer writer, Garage S3). Until filled, switching this
+    # live will cut those jobs off from internal services.
+    allow = [
+      # { cidr = "10.42.24.1/32"; protocol = "tcp"; port = 5432; }
+    ];
+  };
 
   networking.nat = {
     enable = true;

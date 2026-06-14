@@ -6,6 +6,8 @@ let
   kataRuntime = "io.containerd.kata.v2";
 in
 {
+  imports = [ ./nomad-kata-netpolicy.nix ];
+
   options.cluster.nomadKata = {
     enable = lib.mkEnableOption "Kata Containers runtime support for Nomad OCI workloads";
 
@@ -62,6 +64,13 @@ in
         runtimes.${cfg.runtime} = {
           runtimeType = cfg.runtime;
         };
+        # Docker 29 enables a private time namespace by default (moby#52326),
+        # adding {"type":"time"} to the OCI spec. Kata 3.29.0's guest agent
+        # rejects unknown namespace types ("invalid namespace type"), breaking
+        # every Kata container. Offsets are zero so the namespace is a no-op;
+        # disable it via the 29.5+ feature flag until Kata accepts it upstream
+        # (kata-containers#12076).
+        features."time-namespaces" = false;
       };
     };
 
