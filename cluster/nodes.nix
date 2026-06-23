@@ -108,6 +108,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    isGateway = true;
   };
 
   ams-c2-03 = {
