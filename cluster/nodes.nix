@@ -108,6 +108,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    juicefsCsi = true;
   };
 
   fbv-c2-01 = {
@@ -138,6 +139,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     isGateway = true;
+    juicefsCsi = true;
   };
 
   hh4-nomad = {

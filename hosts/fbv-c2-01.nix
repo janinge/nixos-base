@@ -65,5 +65,9 @@ in {
     jobSecrets = [ "authentik.env" ];
   };
 
+  # Shared POSIX filesystem (data on Garage, metadata on Patroni). Requires the
+  # one-time `juicefs format` bootstrap and the juicefs_meta_password sops secret.
+  cluster.juicefs.enable = true;
+
   nix.settings.trusted-users = [ "root" "janinge" ];
 }

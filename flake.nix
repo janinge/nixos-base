@@ -21,6 +21,8 @@
       sops-nix.nixosModules.sops
       ./modules/common.nix
       ./modules/garage.nix
+      ./modules/juicefs.nix
+      ./modules/juicefs-csi.nix
       ./modules/disko/${node.diskLayout}.nix
     ];
 
