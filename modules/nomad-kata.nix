@@ -42,7 +42,9 @@ in
         plugin.docker = {
           config = {
             allow_runtimes = [ "runc" cfg.runtime ];
-            allow_privileged = false;
+            # The JuiceFS CSI node plugin runs as a privileged runc task; allow
+            # privileged when that module is enabled on this node.
+            allow_privileged = config.cluster.juicefsCsi.enable && config.cluster.juicefsCsi.allowPrivileged;
           };
         };
         client.meta = {
