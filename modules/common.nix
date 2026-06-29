@@ -3,6 +3,7 @@
 {
   imports = [
     ./pgbouncer.nix
+    ./juicefs.nix
   ];
 
   time.timeZone = "UTC";
