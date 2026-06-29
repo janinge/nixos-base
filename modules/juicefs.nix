@@ -143,7 +143,11 @@ in
       systemd.tmpfiles.rules = concatLists (mapAttrsToList (_: mount: [
         "d ${mount.mountPoint} 0755 root root -"
         "d ${mount.cacheDir} 0750 root root -"
-      ]) enabledMounts);
+      ]) enabledMounts) ++ [
+        # JuiceFS looks up fusermount at this traditional FHS path, while NixOS
+        # exposes the privileged helper through the wrapper directory.
+        "L+ /bin/fusermount - - - - /run/wrappers/bin/fusermount"
+      ];
 
       boot.kernelModules = [ "fuse" ];
       programs.fuse.userAllowOther = mkIf (any (mount: mount.allowOther) enabledMountList) true;
