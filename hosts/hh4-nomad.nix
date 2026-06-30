@@ -65,8 +65,14 @@ in {
     };
 
     nomad = {
-      enable = true;
-      readOnly = false;
+      hostVolumes = {
+        external-juicefs-p2p = {
+          subPath = "p2p";
+        };
+        external-juicefs-music = {
+          subPath = "music";
+        };
+      };
     };
   };
 

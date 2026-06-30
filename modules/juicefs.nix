@@ -120,6 +120,31 @@ let
           default = false;
           description = "Publish the Nomad host volume as read-only.";
         };
+
+        hostVolumes = mkOption {
+          type = types.attrsOf (types.submodule {
+            options = {
+              subPath = mkOption {
+                type = types.str;
+                description = "Relative path inside the JuiceFS mount to publish as this Nomad host volume.";
+              };
+
+              readOnly = mkOption {
+                type = types.bool;
+                default = false;
+                description = "Publish this Nomad host volume as read-only.";
+              };
+
+              createDir = mkOption {
+                type = types.bool;
+                default = false;
+                description = "Let Nomad create the host volume directory if it does not exist.";
+              };
+            };
+          });
+          default = {};
+          description = "Additional Nomad host volumes backed by subdirectories of this JuiceFS mount.";
+        };
       };
     };
   };
@@ -138,7 +163,10 @@ in
           assertion = mount.cacheSizeMiB > 0;
           message = "services.juicefsMounts.${name}.cacheSizeMiB must be greater than zero.";
         }
-      ]) enabledMounts);
+      ] ++ mapAttrsToList (volumeName: volume: {
+        assertion = volume.subPath != "" && !(hasPrefix "/" volume.subPath);
+        message = "services.juicefsMounts.${name}.nomad.hostVolumes.${volumeName}.subPath must be a non-empty relative path.";
+      }) mount.nomad.hostVolumes) enabledMounts);
 
       systemd.tmpfiles.rules = concatLists (mapAttrsToList (_: mount: [
         "d ${mount.mountPoint} 0755 root root -"
@@ -248,13 +276,20 @@ in
 
     {
       cluster.nomad.client.hostVolumes = mkMerge (mapAttrsToList (_: mount:
-        mkIf mount.nomad.enable {
-          ${mount.nomad.hostVolumeName} = {
-            path = mount.mountPoint;
-            readOnly = mount.nomad.readOnly;
-            createDir = false;
-          };
-        }
+        mkMerge [
+          (mkIf mount.nomad.enable {
+            ${mount.nomad.hostVolumeName} = {
+              path = mount.mountPoint;
+              readOnly = mount.nomad.readOnly;
+              createDir = false;
+            };
+          })
+          (mapAttrs (_: volume: {
+            path = "${mount.mountPoint}/${volume.subPath}";
+            readOnly = volume.readOnly;
+            createDir = volume.createDir;
+          }) mount.nomad.hostVolumes)
+        ]
       ) enabledMounts);
     }
   ]);
