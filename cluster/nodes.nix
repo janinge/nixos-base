@@ -36,6 +36,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
+    juicefsMountClasses = [ "external-juicefs" ];
     garage = {
       enable = true;
       capacity = "800G";
@@ -84,6 +85,7 @@
     isRegistry = true;
     isGateway = true;
     patroni = true;
+    juicefsMountClasses = [ "external-juicefs" ];
   };
 
   ams-c1-02 = {
@@ -96,6 +98,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    juicefsMountClasses = [ "external-juicefs" ];
   };
 
   ams-c2-02 = {
@@ -121,6 +124,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    juicefsMountClasses = [ "external-juicefs" ];
   };
 
   fbv-c2-01 = {
@@ -133,6 +137,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
     kernelModules = [ "kvm-intel" ];
+    juicefsMountClasses = [ "external-juicefs" ];
     garage = {
       enable = true;
       capacity = "160G";
@@ -162,6 +167,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
     isRegistry = true;
+    juicefsMountClasses = [ "external-juicefs" ];
     garage = {
       enable = true;
       capacity = "1024G";

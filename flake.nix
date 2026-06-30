@@ -13,6 +13,7 @@
     lib = nixpkgs.lib;
     nodes = import ./cluster/nodes.nix;
     sharedVolumes = import ./cluster/volumes.nix;
+    juicefsMountCatalog = import ./cluster/juicefs-mounts.nix;
 
     hostFiles = builtins.readDir ./hosts;
 
@@ -36,7 +37,7 @@
             inherit system;
             modules = mkModules nodeCfg ++ [ ./hosts/${fileName} ];
             specialArgs = {
-              inherit nodes hostName sharedVolumes;
+              inherit nodes hostName sharedVolumes juicefsMountCatalog;
             };
           };
         })

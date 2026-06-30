@@ -1,0 +1,18 @@
+secrets/keys/
+
+# Local editor state
+.idea/
+.vscode/
+
+# OS metadata
+.DS_Store
+
+# Nix build outputs
+/result
+/result-*
+
+# Local environments and caches
+.direnv/
+.devenv/
+.env
+.env.*

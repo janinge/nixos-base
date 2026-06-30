@@ -1,12 +1,28 @@
-{ config, lib, pkgs, ... }:
+{ config, options, lib, pkgs, nodes ? {}, hostName ? null, juicefsMountCatalog ? {}, ... }:
 
 with lib;
 
 let
+  nodeCfg =
+    if hostName != null && hasAttr hostName nodes
+    then nodes.${hostName}
+    else {};
+  hostLabel = if hostName == null then "<unknown>" else hostName;
+  hasNomadClientOption = hasAttrByPath [ "cluster" "nomad" "client" "enable" ] options;
+  selectedMountClasses = nodeCfg.juicefsMountClasses or [];
+  missingMountClasses = filter (name: !(hasAttr name juicefsMountCatalog)) selectedMountClasses;
+  validMountClasses = filter (name: hasAttr name juicefsMountCatalog) selectedMountClasses;
+  selectedCatalogMounts = genAttrs validMountClasses (name:
+    juicefsMountCatalog.${name} // {
+      enable = mkDefault true;
+    }
+  );
+
   cfg = config.services.juicefsMounts;
   enabledMounts = filterAttrs (_: mount: mount.enable) cfg;
   enabledMountList = attrValues enabledMounts;
   hasEnabledMounts = enabledMountList != [];
+  enabledUnitNames = mapAttrsToList (name: _: unitName name) enabledMounts;
 
   postgresMetaUrl = mount:
     "postgres://${mount.metadata.username}@${mount.metadata.host}:${toString mount.metadata.port}/${mount.metadata.database}?sslmode=${mount.metadata.sslmode}";
@@ -156,7 +172,19 @@ in
     description = "JuiceFS FUSE mounts backed by PostgreSQL metadata and S3-compatible object storage.";
   };
 
-  config = mkIf hasEnabledMounts (mkMerge [
+  config = mkMerge [
+    {
+      services.juicefsMounts = selectedCatalogMounts;
+
+      assertions = [
+        {
+          assertion = missingMountClasses == [];
+          message = "Unknown JuiceFS mount classes for ${hostLabel}: ${concatStringsSep ", " missingMountClasses}";
+        }
+      ];
+    }
+
+    (mkIf hasEnabledMounts (mkMerge [
     {
       assertions = concatLists (mapAttrsToList (name: mount: [
         {
@@ -229,6 +257,7 @@ in
           path = [
             pkgs.coreutils
             pkgs.juicefs
+            pkgs.util-linux
           ];
 
           script = ''
@@ -257,6 +286,20 @@ in
               ${escapeShellArg mount.mountPoint}
           '';
 
+          postStart = ''
+            for _ in $(seq 1 30); do
+              if mountpoint -q ${escapeShellArg mount.mountPoint}; then
+                break
+              fi
+              sleep 1
+            done
+
+            mountpoint -q ${escapeShellArg mount.mountPoint}
+            ${concatStringsSep "\n            " (mapAttrsToList (_: volume:
+              "mkdir -p ${escapeShellArg "${mount.mountPoint}/${volume.subPath}"}"
+            ) mount.nomad.hostVolumes)}
+          '';
+
           serviceConfig = {
             Type = "simple";
             User = "root";
@@ -274,7 +317,14 @@ in
       ) enabledMounts;
     }
 
-    {
+    (mkIf (hasNomadClientOption && config.cluster.nomad.client.enable) {
+      systemd.services.nomad = {
+        after = enabledUnitNames;
+        requires = enabledUnitNames;
+      };
+    })
+
+    (mkIf (hasNomadClientOption && config.cluster.nomad.client.enable) {
       cluster.nomad.client.hostVolumes = mkMerge (mapAttrsToList (_: mount:
         mkMerge [
           (mkIf mount.nomad.enable {
@@ -291,6 +341,7 @@ in
           }) mount.nomad.hostVolumes)
         ]
       ) enabledMounts);
-    }
-  ]);
+    })
+  ]))
+  ];
 }
