@@ -82,6 +82,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens3";
     kernelModules = [];
+    disablePublicIPv6 = true;
     isRegistry = true;
     isGateway = true;
     patroni = true;

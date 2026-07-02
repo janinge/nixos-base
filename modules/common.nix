@@ -1,5 +1,13 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, nodes ? {}, hostName ? null, ... }:
 
+let
+  cfg =
+    if hostName != null && builtins.hasAttr hostName nodes
+    then nodes.${hostName}
+    else {};
+  disablePublicIPv6 = cfg.disablePublicIPv6 or false;
+  publicIf = cfg.publicIf or null;
+in
 {
   imports = [
     ./pgbouncer.nix
@@ -14,10 +22,16 @@
 
   networking.firewall.checkReversePath = "loose";
   networking.firewall.enable = false;
+  networking.dhcpcd.IPv6rs = lib.mkIf (disablePublicIPv6 && publicIf != null) false;
 
   boot.kernel.sysctl = {
     "net.ipv4.conf.all.rp_filter" = 0;
     "net.ipv4.conf.default.rp_filter" = 0;
+  } // lib.optionalAttrs (disablePublicIPv6 && publicIf != null) {
+    "net.ipv6.conf.${publicIf}.accept_ra" = 0;
+    "net.ipv6.conf.${publicIf}.accept_ra_defrtr" = 0;
+    "net.ipv6.conf.${publicIf}.autoconf" = 0;
+    "net.ipv6.conf.${publicIf}.disable_ipv6" = 1;
   };
 
   services.openssh = {
