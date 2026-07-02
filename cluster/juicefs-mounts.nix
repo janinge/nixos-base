@@ -22,6 +22,9 @@
       external-juicefs-music = {
         subPath = "music";
       };
+      external-juicefs-authentik = {
+        subPath = "authentik";
+      };
     };
   };
 }
