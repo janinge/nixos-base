@@ -21,6 +21,7 @@
     serviceIp = "10.42.20.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens5";
+    tier = "overflow";
 
     system = "aarch64-linux";
     nixpkgs.hostPlatform = "aarch64-linux";
@@ -36,6 +37,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     kernelModules = [ "kvm-intel" ];
+    tier = "secondary";
     juicefsMountClasses = [ "external-juicefs" ];
     garage = {
       enable = true;
@@ -65,6 +67,7 @@
     serviceIp = "10.42.23.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    tier = "overflow";
     garage = {
       enable = true;
       capacity = "2560G";
@@ -83,6 +86,7 @@
     publicIf = "ens3";
     kernelModules = [];
     disablePublicIPv6 = true;
+    tier = "secondary";
     isRegistry = true;
     isGateway = true;
     patroni = true;
@@ -112,6 +116,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    tier = "primary";
     isGateway = true;
   };
 
@@ -125,6 +130,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
     kernelModules = [];
+    tier = "primary";
     juicefsMountClasses = [ "external-juicefs" ];
   };
 
@@ -138,6 +144,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "enp0s5";
     kernelModules = [ "kvm-intel" ];
+    tier = "primary";
     juicefsMountClasses = [ "external-juicefs" ];
     garage = {
       enable = true;
@@ -156,6 +163,7 @@
     serviceIp = "10.42.25.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
+    tier = "secondary";
     isGateway = true;
   };
 
@@ -167,6 +175,7 @@
     serviceIp = "10.42.11.1";
     serviceBridge = "cni-nomad0";
     publicIf = "enp1s0";
+    tier = "primary";
     isRegistry = true;
     juicefsMountClasses = [ "external-juicefs" ];
     garage = {

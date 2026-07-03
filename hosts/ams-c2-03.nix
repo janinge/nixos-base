@@ -58,5 +58,12 @@ in {
   cluster.nomad.client = {
     enable = true;
     hostVolumes = sharedVolumes;
+    jobSecrets = [
+      "bulwark.env"
+      "stalwart_fallback_admin_secret"
+      "stalwart_pg_password"
+      "stalwart_s3_access_key"
+      "stalwart_s3_secret_key"
+    ];
   };
 }

@@ -558,6 +558,11 @@ in
             datacenter = nodeCfg.datacenter;
             site = nodeCfg.datacenter;
             container_runtime = cfg.client.runtime;
+            # Scheduling tier: primary | secondary | overflow. Applied to every
+            # client regardless of runtime, so both Podman and Kata nodes carry
+            # it. Jobs use it via affinity to prefer primary and treat overflow
+            # nodes as last-resort spill-over.
+            tier = nodeCfg.tier or "primary";
           };
         };
 

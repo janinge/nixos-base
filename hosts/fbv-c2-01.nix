@@ -62,7 +62,14 @@ in {
     hostVolumes = sharedVolumes // {
       # Node-specific volumes here, if any
     };
-    jobSecrets = [ "authentik.env" ];
+    jobSecrets = [
+      "authentik.env"
+      "bulwark.env"
+      "stalwart_fallback_admin_secret"
+      "stalwart_pg_password"
+      "stalwart_s3_access_key"
+      "stalwart_s3_secret_key"
+    ];
   };
 
   nix.settings.trusted-users = [ "root" "janinge" ];

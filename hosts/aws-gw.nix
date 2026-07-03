@@ -4,11 +4,12 @@ let
 in {
   imports = [
     ../modules/common.nix
+    ../modules/nomad.nix
   ];
 
   networking.hostName = hostName;
   networking.hostId = cfg.hostId;
-  
+
   networking.interfaces.${cfg.publicIf}.useDHCP = true;
 
   networking.bridges.${cfg.serviceBridge}.interfaces = [];
@@ -33,4 +34,10 @@ in {
       internalInterfaces = [ "tailscale0" ];
     };
   };
+
+  # Overflow (hot-spare) Nomad client: tier=overflow is derived from
+  # cluster/nodes.nix, so jobs only spill here as a last resort. Rootless
+  # Podman runtime (default). Note this node is aarch64 — amd64-only images
+  # are simply infeasible here and skipped. No host volumes attached.
+  cluster.nomad.client.enable = true;
 }

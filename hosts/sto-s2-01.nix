@@ -4,6 +4,7 @@ let
 in {
   imports = [
     ../modules/common.nix
+    ../modules/nomad.nix
   ];
 
   networking.hostName = hostName;
@@ -34,4 +35,9 @@ in {
       internalInterfaces = [ "tailscale0" ];
     };
   };
+
+  # Overflow (hot-spare) Nomad client: tier=overflow is derived from
+  # cluster/nodes.nix, so jobs only spill here as a last resort. Rootless
+  # Podman runtime (default). No host volumes attached.
+  cluster.nomad.client.enable = true;
 }
