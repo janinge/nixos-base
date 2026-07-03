@@ -64,6 +64,20 @@ in
         '';
       };
 
+      dynamicPorts = {
+        from = lib.mkOption {
+          type = lib.types.port;
+          default = 50000;
+          description = "First port in the Nomad client dynamic allocation range.";
+        };
+
+        to = lib.mkOption {
+          type = lib.types.port;
+          default = 51000;
+          description = "Last port in the Nomad client dynamic allocation range.";
+        };
+      };
+
       jobSecrets = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
@@ -502,6 +516,8 @@ in
       services.nomad.settings = {
         client = {
           enabled = true;
+          min_dynamic_port = cfg.client.dynamicPorts.from;
+          max_dynamic_port = cfg.client.dynamicPorts.to;
           node_class = nodeCfg.datacenter;
           cni_config_dir = "/etc/cni/net.d";
           bridge_network_name = nodeCfg.serviceBridge;
@@ -526,6 +542,10 @@ in
             service = {
               cidr = "${nodeCfg.serviceIp}/32";
               interface = nodeCfg.serviceBridge;
+            };
+          } // lib.optionalAttrs (config.cluster.publicFirewall.enable && nodeCfg.publicIf != null) {
+            public = {
+              interface = nodeCfg.publicIf;
             };
           };
 
@@ -592,10 +612,13 @@ in
 
       virtualisation.docker.enable = lib.mkIf (!isKataDockerClient) (lib.mkForce false);
 
-      services.prometheus.exporters.node.enable = true;
+      services.prometheus.exporters.node = {
+        enable = true;
+        listenAddress = nodeCfg.serviceIp;
+      };
       services.cadvisor = {
         enable = true;
-        listenAddress = "0.0.0.0";
+        listenAddress = nodeCfg.serviceIp;
       };
 
       environment.systemPackages = with pkgs; [

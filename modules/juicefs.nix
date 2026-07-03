@@ -317,14 +317,14 @@ in
       ) enabledMounts;
     }
 
-    (mkIf (hasNomadClientOption && config.cluster.nomad.client.enable) {
+    (optionalAttrs hasNomadClientOption (mkIf config.cluster.nomad.client.enable {
       systemd.services.nomad = {
         after = enabledUnitNames;
         requires = enabledUnitNames;
       };
-    })
+    }))
 
-    (mkIf (hasNomadClientOption && config.cluster.nomad.client.enable) {
+    (optionalAttrs hasNomadClientOption (mkIf config.cluster.nomad.client.enable {
       cluster.nomad.client.hostVolumes = mkMerge (mapAttrsToList (_: mount:
         mkMerge [
           (mkIf mount.nomad.enable {
@@ -341,7 +341,7 @@ in
           }) mount.nomad.hostVolumes)
         ]
       ) enabledMounts);
-    })
+    }))
   ]))
   ];
 }

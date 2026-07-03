@@ -23,7 +23,7 @@ in
       log_level = "info";
       derp = {
         server = {
-          enabled = false;
+          enabled = true;
           region_id = 1007;
           region_code = "osl";
           region_name = "Oslo H00t Works";

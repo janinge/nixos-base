@@ -10,6 +10,7 @@ let
 in
 {
   imports = [
+    ./public-firewall.nix
     ./pgbouncer.nix
     ./juicefs.nix
     ./juicefs-internal.nix
@@ -20,8 +21,6 @@ in
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "no";
 
-  networking.firewall.checkReversePath = "loose";
-  networking.firewall.enable = false;
   networking.dhcpcd.IPv6rs = lib.mkIf (disablePublicIPv6 && publicIf != null) false;
 
   boot.kernel.sysctl = {
@@ -36,6 +35,7 @@ in
 
   services.openssh = {
     enable = true;
+    openFirewall = false;
     settings = {
       PermitRootLogin = "no";
       PasswordAuthentication = false;
