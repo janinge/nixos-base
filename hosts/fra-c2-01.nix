@@ -52,7 +52,7 @@ in {
     enable = true;
     runtime = "kata-docker";
     hostVolumes = sharedVolumes;
-    jobSecrets = [ "gitea.env" "directus.env" ];
+    jobSecrets = [ "gitea.env" "directus.env" "smf-dev.env" ];
     jobSecretsFile = ../secrets/kata.yaml;
     # Untrusted workloads: don't launder job egress as the host identity.
     snat = false;
