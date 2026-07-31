@@ -93,47 +93,6 @@
     juicefsMountClasses = [ "external-juicefs" ];
   };
 
-  ams-c1-02 = {
-    datacenter = "ams-do";
-    hostId = "b8a17c4e";
-    diskLayout = "ext4-luks-vm";
-    rootDevice = "/dev/vda";
-    routedSubnet = "10.42.26.0/24";
-    serviceIp = "10.42.26.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "eth0";
-    kernelModules = [];
-    juicefsMountClasses = [ "external-juicefs" ];
-  };
-
-  ams-c2-02 = {
-    datacenter = "ams-do";
-    hostId = "c9b28d5f";
-    diskLayout = "ext4-luks-vm";
-    rootDevice = "/dev/vda";
-    routedSubnet = "10.42.27.0/24";
-    serviceIp = "10.42.27.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "eth0";
-    kernelModules = [];
-    tier = "primary";
-    isGateway = true;
-  };
-
-  ams-c2-03 = {
-    datacenter = "ams-do";
-    hostId = "dac39e60";
-    diskLayout = "ext4-luks-vm";
-    rootDevice = "/dev/vda";
-    routedSubnet = "10.42.28.0/24";
-    serviceIp = "10.42.28.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "eth0";
-    kernelModules = [];
-    tier = "primary";
-    juicefsMountClasses = [ "external-juicefs" ];
-  };
-
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
