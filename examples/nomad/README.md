@@ -4,6 +4,58 @@
 
 `kata-nginx.nomad` is the minimal example for running a normal OCI image with VM isolation through Kata Containers.
 
+There are currently no Kata-capable clients in the cluster. The modules and examples are retained so the runtime can be added again when VM isolation is required.
+
+### Add a Kata client
+
+1. Choose an x86_64 host with hardware virtualization exposed (`/dev/kvm`). In
+   `cluster/nodes.nix`, ensure its node entry declares the appropriate KVM module,
+   normally `kernelModules = [ "kvm-intel" ];` or `[ "kvm-amd" ]`.
+2. Import the Kata module in the host file after `nomad.nix`:
+
+   ```nix
+   imports = [
+     ../modules/nomad.nix
+     ../modules/nomad-kata.nix
+   ];
+   ```
+3. Switch that Nomad client from the default rootless Podman runtime and enable
+   Kata:
+
+   ```nix
+   cluster.nomad.client = {
+     enable = true;
+     runtime = "kata-docker";
+     hostVolumes = sharedVolumes;
+   };
+
+   cluster.nomadKata.enable = true;
+   ```
+4. If the client will run untrusted workloads, preserve their routed source
+   addresses and enable the default-deny policy. Add only the internal services
+   those workloads require:
+
+   ```nix
+   cluster.nomad.client.snat = false;
+   cluster.nomadKata.netPolicy = {
+     enable = true;
+     hostAllowPorts = [ 53 ];
+     allow = [
+       # { cidr = "10.42.24.1/32"; protocol = "tcp"; port = 5432; }
+     ];
+   };
+   ```
+5. Deploy the host, then verify `docker info`, `kata-runtime check`, and
+   `/dev/kvm` before scheduling workloads. Confirm Nomad publishes
+   `meta.container_runtime = kata-docker`, submit `kata-nginx.nomad`, and check
+   its allocation logs.
+
+The Kata client is rootful: `nomad-kata.nix` switches Nomad from the rootless
+Podman driver to Docker, installs Kata/QEMU, registers
+`io.containerd.kata.v2`, and permits only `runc` and the Kata runtime. Drain the
+node before changing an existing client's runtime because its current
+allocations cannot be adopted by the other driver.
+
 The host side requires a Nomad client with the Kata Docker runtime enabled:
 
 ```nix
@@ -45,12 +97,12 @@ The Podman path remains the default for existing clients. Kata clients use Nomad
 deploy the JuiceFS CSI driver (community edition) for dynamic volume provisioning, with data on
 Garage (S3) and metadata on the Patroni PostgreSQL primary.
 
-CSI is **scoped to the kata-docker nodes** because the node plugin must run privileged with rshared
-mount propagation, which needs the rootful Docker those nodes already run. Enable it per-node:
+CSI is **scoped to kata-docker nodes** because the node plugin must run privileged with rshared
+mount propagation, which needs their rootful Docker runtime. Once a Kata client exists, enable it per-node:
 
 ```nix
 # cluster/nodes.nix
-fra-c2-01 = { ...; juicefsCsi = true; };
+my-kata-node = { ...; juicefsCsi = true; };
 ```
 
 The `modules/juicefs-csi.nix` module then (on that node) sets `allow_privileged`, makes

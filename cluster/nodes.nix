@@ -13,20 +13,6 @@
     patroni = true;
   };
 
-  aws-gw = {
-    datacenter = "sto-aw";
-    hostId = "9c2b4d1a";
-    diskLayout = "ext4-ebs";
-    routedSubnet = "10.42.20.0/24";
-    serviceIp = "10.42.20.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "ens5";
-    tier = "overflow";
-
-    system = "aarch64-linux";
-    nixpkgs.hostPlatform = "aarch64-linux";
-  };
-
   cb-weed = {
     datacenter = "fra-cb";
     hostId = "1f4f0019";
