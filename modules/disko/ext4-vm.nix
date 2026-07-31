@@ -48,7 +48,7 @@ in
         type = "lvm_vg";
         lvs = {
           swap = {
-            size = "8G";
+            size = cfg.swapSize or "8G";
             content = {
               type = "swap";
               randomEncryption = true;

@@ -79,6 +79,20 @@
     juicefsMountClasses = [ "external-juicefs" ];
   };
 
+  ams-c1-02 = {
+    datacenter = "ams-scw";
+    hostId = "ecfbacaa";
+    diskLayout = "ext4-vm";
+    rootDevice = "/dev/vda";
+    swapSize = "1G";
+    routedSubnet = "10.42.29.0/24";
+    serviceIp = "10.42.29.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens2";
+    kernelModules = [ "kvm-amd" ];
+    tier = "overflow";
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
