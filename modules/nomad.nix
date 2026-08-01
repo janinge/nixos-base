@@ -165,6 +165,20 @@ in
 
       systemd.tmpfiles.rules = [
         "d /var/lib/nomad 0750 nomad nomad -"
+        # A client may previously have run as root (for example with the
+        # Kata/Docker runtime). Reconcile Nomad-owned state when returning to
+        # the unprivileged Podman client. Do not recursively chown alloc/:
+        # task files can intentionally use container namespace ownership.
+        "d /var/lib/nomad/client 0700 nomad nomad -"
+        "Z /var/lib/nomad/client - nomad nomad -"
+        "z /var/lib/nomad/client/state.db 0600 nomad nomad -"
+        "d /var/lib/nomad/alloc 0711 nomad nomad -"
+        "d /var/lib/nomad/.cache 0700 nomad nomad -"
+        "Z /var/lib/nomad/.cache - nomad nomad -"
+        "d /var/lib/nomad/.config 0700 nomad nomad -"
+        "Z /var/lib/nomad/.config - nomad nomad -"
+        "d /var/lib/nomad/.local 0700 nomad nomad -"
+        "Z /var/lib/nomad/.local - nomad nomad -"
         "d /var/lib/alloc_mounts 0755 nomad nomad -"
       ];
 
