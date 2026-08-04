@@ -5,6 +5,79 @@ let
   isPodmanClient = cfg.client.enable && cfg.client.runtime == "podman";
   isKataDockerClient = cfg.client.enable && cfg.client.runtime == "kata-docker";
 
+  # Rootless containers create files in allocation directories using subordinate
+  # host UIDs.  Nomad runs outside that user namespace and cannot traverse (and
+  # therefore GC) directories such as a container-owned mode 0700 data dir.
+  # Reap only old allocation directories which the server no longer considers
+  # live.  The API checks deliberately fail closed: an unavailable or malformed
+  # response leaves every directory untouched.
+  nomadAllocReaper = pkgs.writeShellApplication {
+    name = "nomad-allocation-reaper";
+    runtimeInputs = [ pkgs.coreutils pkgs.curl pkgs.findutils pkgs.gnugrep pkgs.jq ];
+    text = ''
+      set -o errexit -o nounset -o pipefail
+
+      alloc_root=/var/lib/nomad/alloc
+      minimum_age_minutes=60
+      nomad_addr="''${NOMAD_ADDR:-http://${nodeCfg.serviceIp}:4646}"
+      export NOMAD_ADDR="$nomad_addr"
+      dry_run=false
+
+      case "''${1:-}" in
+        --dry-run) dry_run=true ;;
+        "") ;;
+        *) echo "usage: nomad-allocation-reaper [--dry-run]" >&2; exit 2 ;;
+      esac
+
+      test -d "$alloc_root" || exit 0
+
+      work_dir=$(mktemp -d)
+      trap 'rm -rf "$work_dir"' EXIT
+
+      node_id=$(< /var/lib/nomad/client/client-id)
+      if ! [[ "$node_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+        echo "Invalid Nomad client ID; refusing allocation cleanup" >&2
+        exit 1
+      fi
+      curl --fail --silent --show-error \
+        "$nomad_addr/v1/node/$node_id/allocations" > "$work_dir/allocations.json"
+      jq -e 'type == "array"' "$work_dir/allocations.json" >/dev/null
+
+      # DesiredStatus=run must always win, including allocations temporarily in
+      # unknown state during a network partition.  Also retain every allocation
+      # whose client state is not terminal.
+      jq -r '.[]
+        | select(.DesiredStatus == "run"
+          or (.ClientStatus != "complete"
+            and .ClientStatus != "failed"
+            and .ClientStatus != "lost"))
+        | .ID' "$work_dir/allocations.json" > "$work_dir/live-allocations"
+
+      find "$alloc_root" -mindepth 1 -maxdepth 1 -type d \
+        -mmin "+$minimum_age_minutes" -print0 |
+        while IFS= read -r -d "" allocation_dir; do
+          allocation_id="''${allocation_dir##*/}"
+
+          # Never operate on unexpected names, even under the dedicated root.
+          if ! [[ "$allocation_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+            echo "Ignoring unexpected allocation directory: $allocation_dir" >&2
+            continue
+          fi
+
+          if grep --fixed-strings --line-regexp --quiet "$allocation_id" "$work_dir/live-allocations"; then
+            continue
+          fi
+
+          if [[ "$dry_run" == true ]]; then
+            echo "Would remove stale allocation directory: $allocation_dir"
+          else
+            echo "Removing stale allocation directory: $allocation_dir"
+            find "$allocation_dir" -xdev -depth -delete
+          fi
+        done
+    '';
+  };
+
   # Helper variables for client configuration
   consulServers = lib.filter (n: n ? "isRegistry" && n.isRegistry) (lib.attrValues nodes);
   consulJoin = lib.map (n: n.serviceIp) consulServers;
@@ -650,6 +723,38 @@ in
     # Existing rootless Podman workload path. Kata clients use a separate
     # containerd driver path so the Podman driver model stays unchanged.
     (lib.mkIf isPodmanClient {
+      # Nomad cannot remove allocation files owned by UIDs in the rootless
+      # Podman subordinate-ID mapping.  Run a conservative privileged fallback
+      # after Nomad's own GC has had time to remove terminal allocations.
+      systemd.services.nomad-allocation-reaper = {
+        description = "Remove stale rootless-Podman Nomad allocation directories";
+        after = [ "nomad.service" ];
+        wants = [ "nomad.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = lib.getExe nomadAllocReaper;
+          User = "root";
+          Group = "root";
+          UMask = "0077";
+          NoNewPrivileges = true;
+          PrivateTmp = true;
+          ProtectHome = true;
+          ProtectSystem = "strict";
+          ReadWritePaths = [ "/var/lib/nomad/alloc" ];
+        };
+      };
+
+      systemd.timers.nomad-allocation-reaper = {
+        description = "Periodically remove stale Nomad allocation directories";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "15m";
+          OnUnitActiveSec = "6h";
+          RandomizedDelaySec = "5m";
+          Persistent = true;
+        };
+      };
+
       services.nomad.extraSettingsPlugins = [ pkgs.nomad-driver-podman ];
 
       services.nomad.settings = {
