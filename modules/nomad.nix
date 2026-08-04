@@ -237,6 +237,7 @@ in
           enabled = true;
           bootstrap_expect = serverCount;
           raft_multiplier = 5;
+          heartbeat_grace = "1m";
           # Configure Nomad to directly join peers if Consul discovery isn't ready yet
           server_join = {
             retry_join = lib.filter (ip: ip != nodeCfg.serviceIp) consulJoin;
