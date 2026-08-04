@@ -31,6 +31,14 @@ in
     enable = true;
     package = corednsPackage;
     config = ''
+      ts.h00t.works:53 {
+        # Resolve MagicDNS names through the local Tailscale DNS proxy instead
+        # of letting the broader h00t.works template answer with this node's
+        # service IP.
+        bind ${lib.concatStringsSep " " bindAddresses}
+        forward . 100.100.100.100
+      }
+
       .:53 {
         # Bind the DNS server to the service IP address for this host and localhost.
         bind ${lib.concatStringsSep " " bindAddresses}
@@ -47,7 +55,7 @@ in
         }
 
         # Silence IPv6
-        template IN A h00t.works {
+        template IN AAAA h00t.works {
           rcode NOERROR
         }
 
