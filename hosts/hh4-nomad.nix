@@ -31,6 +31,32 @@ in {
     { address = cfg.serviceIp; prefixLength = 24; }
   ];
 
+  # Keep mDNS on the physical LAN. In particular, do not let Avahi browse or
+  # publish on Nomad's bridge and its dynamically-created workload interfaces.
+  services.avahi = {
+    allowInterfaces = [ cfg.publicIf ];
+    ipv4 = true;
+    reflector = false;
+  };
+
+  # Contain the failure mode where avahi-daemon spins indefinitely, and make
+  # service recovery reliable if it exits or leaves a stale runtime PID file.
+  systemd.services.avahi-daemon = {
+    preStart = ''
+      rm -f /run/avahi-daemon/pid
+    '';
+
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "2s";
+      TimeoutStopSec = "5s";
+      SendSIGKILL = true;
+      FinalKillSignal = "SIGKILL";
+      CPUQuota = "50%";
+      LimitCORE = "infinity";
+    };
+  };
+
   boot.kernel.sysctl = {
     "net.ipv6.conf.default.accept_ra" = 1;
     "net.ipv6.conf.all.accept_ra" = 1;
