@@ -1,0 +1,62 @@
+{ nodes, hostName, sharedVolumes, ... }:
+let
+  cfg = nodes.${hostName};
+in {
+  imports = [
+    ../modules/common.nix
+    ../modules/tailscale.nix
+    ../modules/coredns.nix
+    ../modules/nomad.nix
+  ];
+
+  networking.hostName = hostName;
+  networking.hostId = cfg.hostId;
+  networking.useDHCP = false;
+  networking.nameservers = [ "127.0.0.1" ];
+  networking.dhcpcd.extraConfig = "nohook resolv.conf";
+
+  networking.defaultGateway = "5.253.247.1";
+  networking.defaultGateway6 = {
+    address = "fe80::1";
+    interface = cfg.publicIf;
+  };
+
+  networking.interfaces.${cfg.publicIf} = {
+    useDHCP = false;
+    ipv4.addresses = [
+      { address = "5.253.247.246"; prefixLength = 24; }
+    ];
+    ipv6.addresses = [
+      { address = "2a0e:97c0:3e3:cce::1"; prefixLength = 64; }
+    ];
+  };
+
+  networking.bridges.${cfg.serviceBridge}.interfaces = [];
+  networking.interfaces.${cfg.serviceBridge}.ipv4.addresses = [
+    { address = cfg.serviceIp; prefixLength = 24; }
+  ];
+
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "both";
+    extraSetFlags = [
+      "--accept-dns=false"
+      "--accept-routes"
+      "--advertise-exit-node"
+      "--advertise-routes=${cfg.routedSubnet}"
+    ];
+  };
+
+  cluster.nomad.client = {
+    enable = true;
+    hostVolumes = sharedVolumes;
+    jobSecrets = [ "gitea.env" "directus.env" "smf-dev.env" ];
+    jobSecretsFile = ../secrets/kata.yaml;
+  };
+
+  networking.nat = {
+    enable = true;
+    externalInterface = cfg.publicIf;
+    internalInterfaces = [ "tailscale0" ];
+  };
+}

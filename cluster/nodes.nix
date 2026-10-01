@@ -126,6 +126,19 @@
     isGateway = true;
   };
 
+  fra-c2-02 = {
+    datacenter = "fra-eq";
+    hostId = "2c2f10d4";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/sda";
+    kernelModules = [ "kvm-intel" ];
+    routedSubnet = "10.42.30.0/24";
+    serviceIp = "10.42.30.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens18";
+    tier = "secondary";
+  };
+
   hh4-nomad = {
     datacenter = "bgo-hh";
     hostId = "f2d31c54";
