@@ -138,6 +138,7 @@
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     tier = "secondary";
+    isGateway = true;
   };
 
   hh4-nomad = {
