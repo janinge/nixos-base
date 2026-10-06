@@ -359,11 +359,7 @@ in
 
     # Gateway specific configuration (Traefik)
     (lib.mkIf cfg.server.gateway.enable {
-      sops.secrets.aws_route53_access_key_id = {
-        owner = "traefik";
-        restartUnits = [ "traefik.service" ];
-      };
-      sops.secrets.aws_route53_secret_access_key = {
+      sops.secrets.bunny_api_key = {
         owner = "traefik";
         restartUnits = [ "traefik.service" ];
       };
@@ -376,12 +372,9 @@ in
         restartUnits = [ "traefik.service" ];
       };
 
-      sops.templates."traefik-aws.env" = {
+      sops.templates."traefik-bunny.env" = {
         content = ''
-          AWS_ACCESS_KEY_ID=${config.sops.placeholder.aws_route53_access_key_id}
-          AWS_SECRET_ACCESS_KEY=${config.sops.placeholder.aws_route53_secret_access_key}
-          AWS_REGION=us-east-1
-          AWS_HOSTED_ZONE_ID=Z00024711XAQWYV6Y3F0V
+          BUNNY_API_KEY=${config.sops.placeholder.bunny_api_key}
           TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${config.sops.placeholder.acme_email}
         '';
         owner = "traefik";
@@ -397,7 +390,7 @@ in
       # Inject credentials into Traefik
       systemd.services.traefik.serviceConfig = {
         EnvironmentFile = [
-          config.sops.templates."traefik-aws.env".path
+          config.sops.templates."traefik-bunny.env".path
           config.sops.templates."traefik-cf.env".path
         ];
       };
@@ -467,7 +460,7 @@ in
           certificatesResolvers.letsencrypt.acme = {
             storage = "/var/lib/traefik/acme.json";
             dnsChallenge = {
-              provider = "route53";
+              provider = "bunny";
               propagation = {
                 delayBeforeChecks = "60s";
               };
