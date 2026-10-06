@@ -461,8 +461,13 @@ in
             storage = "/var/lib/traefik/acme.json";
             dnsChallenge = {
               provider = "bunny";
+              resolvers = [ "1.1.1.1:53" "8.8.8.8:53" ];
               propagation = {
                 delayBeforeChecks = "60s";
+                # Bunny's kiki nameserver is unreachable over IPv6 from this
+                # node. Require TXT propagation through both public resolvers.
+                disableANSChecks = true;
+                requireAllRNS = true;
               };
             };
           };
