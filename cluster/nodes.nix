@@ -93,8 +93,8 @@
     tier = "overflow";
   };
 
-  ams-c2-03 = {
-    datacenter = "ams-hn"; # Hostnet / One.com
+  lej-c2-01 = {
+    datacenter = "lej-hn"; # Hostnet / One.com, Leipzig
     hostId = "7ac00c5e";
     diskLayout = "ext4-luks-vm";
     rootDevice = "/dev/vda";
