@@ -93,6 +93,20 @@
     tier = "overflow";
   };
 
+  ams-c2-03 = {
+    datacenter = "ams-hn"; # Hostnet / One.com
+    hostId = "7ac00c5e";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/vda";
+    kernelModules = [ "kvm-amd" ];
+    routedSubnet = "10.42.31.0/24";
+    serviceIp = "10.42.31.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "ens3";
+    tier = "secondary";
+    isGateway = true;
+  };
+
   fbv-c2-01 = {
     datacenter = "bgo-fb";
     hostId = "155e3659";
