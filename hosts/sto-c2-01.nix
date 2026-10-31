@@ -62,7 +62,6 @@ in {
     enable = true;
     hostVolumes = sharedVolumes;
     jobSecrets = [ "directus.env" ];
-    jobSecretsFile = ../secrets/kata.yaml;
   };
 
   networking.nat = {

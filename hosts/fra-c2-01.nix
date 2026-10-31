@@ -50,8 +50,7 @@ in {
   cluster.nomad.client = {
     enable = true;
     hostVolumes = sharedVolumes;
-    jobSecrets = [ "gitea.env" "directus.env" "smf-dev.env" ];
-    jobSecretsFile = ../secrets/kata.yaml;
+    jobSecrets = [ "directus.env" ];
   };
 
   networking.nat = {

@@ -63,6 +63,7 @@ in {
       # Node-specific volumes here, if any
     };
     jobSecrets = [
+      "directus.env"
       "authentik.env"
       "bulwark.env"
       "stalwart_fallback_admin_secret"

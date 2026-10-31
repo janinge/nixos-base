@@ -72,7 +72,7 @@
     serviceIp = "10.42.32.1";
     serviceBridge = "cni-nomad0";
     publicIf = "eth0";
-    tier = "secondary";
+    tier = "primary";
     isGateway = true;
   };
 
@@ -149,21 +149,6 @@
     kernelModules = [ "kvm-intel" ];
     routedSubnet = "10.42.25.0/24";
     serviceIp = "10.42.25.1";
-    serviceBridge = "cni-nomad0";
-    publicIf = "ens18";
-    tier = "secondary";
-    isGateway = true;
-  };
-
-  fra-c2-02 = {
-    datacenter = "fra-eq";
-    hostId = "2c2f10d4";
-    diskLayout = "ext4-luks-vm";
-    rootDevice = "/dev/sda";
-    kernelModules = [];
-    serialConsole = false;
-    routedSubnet = "10.42.30.0/24";
-    serviceIp = "10.42.30.1";
     serviceBridge = "cni-nomad0";
     publicIf = "ens18";
     tier = "secondary";

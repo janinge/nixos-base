@@ -39,7 +39,6 @@ in {
     enable = true;
     hostVolumes = sharedVolumes;
     jobSecrets = [ "directus.env" ];
-    jobSecretsFile = ../secrets/kata.yaml;
   };
 
   # OpenStack's metadata endpoint trips the AWS probe and prevents startup.

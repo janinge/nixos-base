@@ -38,6 +38,9 @@ in {
   };
 
   # Lightweight overflow Nomad client using the default rootless Podman
-  # runtime. No workload secrets or host volumes are attached.
-  cluster.nomad.client.enable = true;
+  # runtime. No host volumes are attached.
+  cluster.nomad.client = {
+    enable = true;
+    jobSecrets = [ "directus.env" ];
+  };
 }

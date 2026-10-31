@@ -44,6 +44,7 @@ in {
     enable = true;
     hostVolumes = sharedVolumes;
     jobSecrets = [
+      "directus.env"
       "bulwark.env"
       "stalwart_fallback_admin_secret"
       "stalwart_pg_password"

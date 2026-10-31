@@ -162,7 +162,6 @@ in
         type = lib.types.nullOr lib.types.path;
         default = null;
         description = "SOPS secrets file to use for all jobSecrets on this node. When null, the host's sops.defaultSopsFile is used.";
-        example = ../secrets/kata.yaml;
       };
 
       hostVolumes = lib.mkOption {
