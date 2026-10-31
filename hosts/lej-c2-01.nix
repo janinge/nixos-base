@@ -42,6 +42,9 @@ in {
     jobSecretsFile = ../secrets/kata.yaml;
   };
 
+  # OpenStack's metadata endpoint trips the AWS probe and prevents startup.
+  services.nomad.settings.client.options."fingerprint.denylist" = "env_aws";
+
   networking.nat = {
     enable = true;
     externalInterface = cfg.publicIf;
