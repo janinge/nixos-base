@@ -61,6 +61,21 @@
     };
   };
 
+  sto-c2-01 = {
+    datacenter = "sto-hu"; # HostUp, Stockholm
+    hostId = "ce3f25e2";
+    diskLayout = "ext4-luks-vm";
+    rootDevice = "/dev/sda";
+    kernelModules = [];
+    serialConsole = false;
+    routedSubnet = "10.42.32.0/24";
+    serviceIp = "10.42.32.1";
+    serviceBridge = "cni-nomad0";
+    publicIf = "eth0";
+    tier = "secondary";
+    isGateway = true;
+  };
+
   ams-c1-01 = {
     datacenter = "ams-lw";
     hostId = "217942d2";

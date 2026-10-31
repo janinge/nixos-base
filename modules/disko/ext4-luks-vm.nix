@@ -120,11 +120,14 @@ in
     cfg.kernelModules;
 
   boot.kernelParams = [
+    "console=tty0"
+  ] ++ lib.optionals (!config.zramSwap.enable) [
+    # zram already compresses swap pages; avoid a second compression layer.
     "zswap.enabled=1"
     "zswap.compressor=zstd"
     "zswap.zpool=zsmalloc"
-    "console=tty0"
-  ] ++ lib.optional (cfg.serialConsole or true) "console=ttyS0,115200n8";
+  ] ++ lib.optional config.zramSwap.enable "zswap.enabled=0"
+    ++ lib.optional (cfg.serialConsole or true) "console=ttyS0,115200n8";
 
   boot.loader.grub = {
     enable = true;

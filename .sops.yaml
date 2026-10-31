@@ -11,6 +11,7 @@ keys:
   - &ams_c1_01 age1whhsvuteq2p8wmpt7swft4fn42ztmwp2whwk0w9dsnqsgz2znv0shp2c84
   - &ams_c1_02 age1d86kzax57xvd47fn8raav7xk23sq4rsjcmcv33nleepwvcnd7vfqdwzk2n
   - &lej_c2_01 age1wezw8cskxgqpurc0gkdnf0mf5nvpe5pfyuak4fraruk2frusrgfqvsvqd0
+  - &sto_c2_01 age1ukf2xhmd3phvumvyeykvpvdafyw0xgnvc38m59hkunmjqrt6fcxspj6faj
 
 creation_rules:
   # Site specific: hh4
@@ -28,6 +29,7 @@ creation_rules:
           - *fra_c2_01
           - *fra_c2_02
           - *lej_c2_01
+          - *sto_c2_01
 
   # Shared global secrets
   - path_regex: secrets.yaml$
@@ -45,4 +47,5 @@ creation_rules:
           - *ams_c1_01
           - *ams_c1_02
           - *lej_c2_01
+          - *sto_c2_01
 
